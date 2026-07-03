@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.hassan.tasknest.R
 import com.hassan.tasknest.data.local.entity.Task
@@ -43,6 +44,12 @@ class TaskListFragment : Fragment() {
         )
         binding.rvTasks.layoutManager = LinearLayoutManager(requireContext())
         binding.rvTasks.adapter = taskAdapter
+
+        val swipeCallback = TaskSwipeCallback(
+            onSwipeLeft = { position -> viewModel.deleteTask(taskAdapter.getTaskAt(position)) },
+            onSwipeRight = { position -> viewModel.toggleTaskCompletion(taskAdapter.getTaskAt(position)) }
+        )
+        ItemTouchHelper(swipeCallback).attachToRecyclerView(binding.rvTasks)
 
         binding.toolbar.inflateMenu(R.menu.menu_task_list)
         binding.toolbar.setOnMenuItemClickListener { item ->

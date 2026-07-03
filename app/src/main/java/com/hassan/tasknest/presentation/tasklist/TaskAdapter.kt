@@ -28,6 +28,8 @@ class TaskAdapter(
         notifyDataSetChanged()
     }
 
+    fun getTaskAt(position: Int): Task = tasks[position]
+
     override fun getItemCount(): Int = tasks.size
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TaskViewHolder {
