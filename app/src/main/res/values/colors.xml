@@ -1,0 +1,25 @@
+<resources>
+    <color name="brand_primary">#4F46E5</color>
+    <color name="background_light">#F9FAFB</color>
+    <color name="text_primary">#111827</color>
+    <color name="text_secondary">#6B7280</color>
+    <color name="text_muted">#374151</color>
+    <color name="icon_tint">#4B5563</color>
+    <color name="priority_high">#EF4444</color>
+    <color name="category_dot_green">#10B981</color>
+    <color name="empty_illustration_tint">#D1D5DB</color>
+    <color name="white">#FFFFFF</color>"
+    <color name="warning">#EF8444</color>
+    <color name="category_work_bg">#E3E9FD</color>
+    <color name="category_personal_bg">#DCFCE7</color>
+    <color name="priority_high_bg">#FEE2E2</color>
+    <color name="swatch_red">#EF4444</color>
+    <color name="swatch_amber">#F59E0B</color>
+    <color name="swatch_green">#10B981</color>
+    <color name="swatch_blue">#3B82F6</color>
+    <color name="swatch_purple">#8B5CF6</color>
+    <color name="swatch_pink">#EC4899</color>
+    <color name="divider">#E5E7EB</color>
+    <color name="status_success">#10B981</color>
+    <color name="status_error">#EF4444</color>
+</resources>

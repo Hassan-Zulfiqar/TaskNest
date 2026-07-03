@@ -1,0 +1,6 @@
+/build
+/local.properties
+/.idea (or at least .idea/workspace.xml, .idea/caches)
+*.apk
+*.aab
+.gradle
