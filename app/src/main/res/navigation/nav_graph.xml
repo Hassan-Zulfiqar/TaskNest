@@ -7,6 +7,19 @@
     <fragment
         android:id="@+id/taskListFragment"
         android:name="com.hassan.tasknest.presentation.tasklist.TaskListFragment"
-        android:label="Tasks" />
+        android:label="Tasks">
+        <action
+            android:id="@+id/action_taskListFragment_to_addEditTaskBottomSheet"
+            app:destination="@id/addEditTaskBottomSheet" />
+    </fragment>
+
+    <dialog
+        android:id="@+id/addEditTaskBottomSheet"
+        android:name="com.hassan.tasknest.presentation.addedittask.AddEditTaskBottomSheet">
+        <argument
+            android:name="taskId"
+            app:argType="long"
+            android:defaultValue="-1L" />
+    </dialog>
 
 </navigation>

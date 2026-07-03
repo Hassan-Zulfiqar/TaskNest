@@ -10,6 +10,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.navigation.fragment.findNavController
 import com.hassan.tasknest.R
 import com.hassan.tasknest.data.local.entity.Task
 import com.hassan.tasknest.databinding.FragmentTaskListBinding
@@ -98,7 +99,9 @@ class TaskListFragment : Fragment() {
     }
 
     private fun onTaskClicked(task: Task) {
-        // TODO: Navigate to TaskDetailFragment
+        findNavController().navigate(
+            TaskListFragmentDirections.actionTaskListFragmentToAddEditTaskBottomSheet(taskId = task.id)
+        )
     }
 
     private fun onSearchClicked() {
@@ -110,6 +113,8 @@ class TaskListFragment : Fragment() {
     }
 
     private fun onAddTaskClicked() {
-        // TODO: Open AddEditTaskBottomSheet
+        findNavController().navigate(
+            TaskListFragmentDirections.actionTaskListFragmentToAddEditTaskBottomSheet(taskId = -1L)
+        )
     }
 }
