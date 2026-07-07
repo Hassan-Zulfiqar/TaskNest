@@ -31,4 +31,7 @@ interface TaskDao {
 
 	@Delete
 	suspend fun deleteTask(task: Task)
+
+	@Query("UPDATE tasks SET categoryId = NULL WHERE categoryId = :categoryId")
+	suspend fun reassignTasksFromCategory(categoryId: Long): Int
 }

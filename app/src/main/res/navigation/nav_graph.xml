@@ -14,6 +14,9 @@
         <action
             android:id="@+id/action_taskListFragment_to_taskDetailFragment"
             app:destination="@id/taskDetailFragment" />
+        <action
+            android:id="@+id/action_taskListFragment_to_categoryFragment"
+            app:destination="@id/categoryFragment" />
     </fragment>
 
     <fragment
@@ -26,6 +29,23 @@
             android:id="@+id/action_taskDetailFragment_to_addEditTaskBottomSheet"
             app:destination="@id/addEditTaskBottomSheet" />
     </fragment>
+
+    <fragment
+        android:id="@+id/categoryFragment"
+        android:name="com.hassan.tasknest.presentation.category.CategoryFragment">
+        <action
+            android:id="@+id/action_categoryFragment_to_addEditCategoryBottomSheet"
+            app:destination="@id/addEditCategoryBottomSheet" />
+    </fragment>
+
+    <dialog
+        android:id="@+id/addEditCategoryBottomSheet"
+        android:name="com.hassan.tasknest.presentation.category.AddEditCategoryBottomSheet">
+        <argument
+            android:name="categoryId"
+            app:argType="long"
+            android:defaultValue="-1L" />
+    </dialog>
 
     <dialog
         android:id="@+id/addEditTaskBottomSheet"

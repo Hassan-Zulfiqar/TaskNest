@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">TaskNest</string>
     <string name="tagline">Organize Your Day</string>
-    <string name="task_list_greeting">Hi, let\'s get things done</string>
+    <string name="task_list_greeting">TaskNest</string>
     <string name="search_tasks">Search tasks</string>
     <string name="settings">Settings</string>
     <string name="no_tasks_yet">No tasks yet</string>
@@ -9,5 +9,7 @@
     <string name="add_new_task">Add new task</string>
     <string name="task_details">Task Details</string>
     <string name="task_complete">Task Complete</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 
 </resources>

@@ -1,11 +1,13 @@
 package com.hassan.tasknest.di
 
 import com.hassan.tasknest.data.datastore.UserPreferencesDataStore
+import com.hassan.tasknest.data.repository.CategoryRepository
 import com.hassan.tasknest.data.repository.TaskRepository
 import com.hassan.tasknest.data.local.AppDatabase
 import com.hassan.tasknest.data.local.dao.CategoryDao
 import com.hassan.tasknest.data.local.dao.TaskDao
 import com.hassan.tasknest.presentation.addedittask.AddEditTaskViewModel
+import com.hassan.tasknest.presentation.category.CategoryViewModel
 import com.hassan.tasknest.presentation.taskdetail.TaskDetailViewModel
 import com.hassan.tasknest.presentation.tasklist.TaskListViewModel
 import org.koin.android.ext.koin.androidContext
@@ -18,7 +20,9 @@ val appModule = module {
     single<CategoryDao> { get<AppDatabase>().categoryDao() }
     single { UserPreferencesDataStore(androidContext()) }
     single { TaskRepository(get()) }
+    single { CategoryRepository(get()) }
     viewModel { TaskListViewModel(get()) }
-    viewModel { AddEditTaskViewModel(get()) }
+    viewModel { AddEditTaskViewModel(get<TaskRepository>(), get<CategoryRepository>()) }
     viewModel { TaskDetailViewModel(get()) }
+    viewModel { CategoryViewModel(get<CategoryRepository>(), get<TaskRepository>()) }
 }

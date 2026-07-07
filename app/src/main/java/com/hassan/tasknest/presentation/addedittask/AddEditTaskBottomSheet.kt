@@ -1,22 +1,28 @@
 package com.hassan.tasknest.presentation.addedittask
 
 import android.app.Dialog
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.google.android.material.bottomsheet.BottomSheetDialog
+import androidx.core.content.ContextCompat
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.navArgs
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.chip.Chip
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
+import com.hassan.tasknest.R
+import com.hassan.tasknest.data.local.entity.Category
 import com.hassan.tasknest.data.local.entity.Priority
 import com.hassan.tasknest.databinding.AddEditTaskBottomSheetBinding
 import kotlinx.coroutines.launch
@@ -70,11 +76,19 @@ class AddEditTaskBottomSheet : BottomSheetDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        binding.chipAddCategory.visibility = View.GONE
+
         if (args.taskId != -1L && savedInstanceState == null) {
             viewModel.loadTaskForEdit(args.taskId)
         }
 
         setupListeners()
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.categories.collect { categories -> populateCategoryChips(categories) }
+            }
+        }
 
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -105,6 +119,47 @@ class AddEditTaskBottomSheet : BottomSheetDialogFragment() {
 
         binding.btnClose.setOnClickListener { dismiss() }
         binding.btnSaveTask.setOnClickListener { viewModel.saveTask() }
+    }
+
+    private fun populateCategoryChips(categories: List<Category>) {
+        val chipGroup = binding.chipGroupCategory
+        val addChip = binding.chipAddCategory
+        chipGroup.setOnCheckedStateChangeListener(null)
+        chipGroup.removeAllViews()
+        chipGroup.isSingleSelection = true
+        categories.forEach { category ->
+            val chip = Chip(requireContext()).apply {
+                id = View.generateViewId()
+                text = category.name
+                tag = category.id
+                isCheckable = true
+                chipBackgroundColor = ColorStateList.valueOf(Color.parseColor(category.colorHex))
+                setTextColor(ContextCompat.getColor(requireContext(), R.color.text_primary))
+            }
+            chipGroup.addView(chip)
+        }
+        chipGroup.addView(addChip)
+        applyChipSelection(viewModel.uiState.value.categoryId)
+    }
+
+    private fun applyChipSelection(categoryId: Long?) {
+        val chipGroup = binding.chipGroupCategory
+        chipGroup.setOnCheckedStateChangeListener(null)
+        for (i in 0 until chipGroup.childCount) {
+            val chip = chipGroup.getChildAt(i) as? Chip ?: continue
+            if (chip.tag is Long) {
+                chip.isChecked = chip.tag == categoryId
+            }
+        }
+        chipGroup.setOnCheckedStateChangeListener { group, checkedIds ->
+            if (checkedIds.isEmpty()) {
+                viewModel.updateCategory(null)
+            } else {
+                val chip = group.findViewById<Chip>(checkedIds.first())
+                val catId = chip?.tag as? Long
+                viewModel.updateCategory(catId)
+            }
+        }
     }
 
     private fun renderState(uiState: AddEditTaskUiState) {
@@ -141,6 +196,8 @@ class AddEditTaskBottomSheet : BottomSheetDialogFragment() {
         binding.switchReminder.setOnCheckedChangeListener { _, isChecked ->
             viewModel.updateReminderEnabled(isChecked)
         }
+
+        applyChipSelection(uiState.categoryId)
 
         binding.btnSaveTask.isEnabled = uiState.isSaveEnabled
 

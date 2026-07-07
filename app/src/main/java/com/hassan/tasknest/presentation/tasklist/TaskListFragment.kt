@@ -56,6 +56,7 @@ class TaskListFragment : Fragment() {
         binding.toolbar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.action_search -> { onSearchClicked(); true }
+                R.id.action_categories -> { onCategoriesClicked(); true }
                 R.id.action_settings -> { onSettingsClicked(); true }
                 else -> false
             }
@@ -102,6 +103,12 @@ class TaskListFragment : Fragment() {
         android.util.Log.d("TaskNest_Debug", "onTaskClicked called for task id=${task.id}")
         findNavController().navigate(
             TaskListFragmentDirections.actionTaskListFragmentToTaskDetailFragment(taskId = task.id)
+        )
+    }
+
+    private fun onCategoriesClicked() {
+        findNavController().navigate(
+            TaskListFragmentDirections.actionTaskListFragmentToCategoryFragment()
         )
     }
 

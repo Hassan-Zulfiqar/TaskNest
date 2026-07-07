@@ -22,4 +22,8 @@ class TaskRepository(private val taskDao: TaskDao) {
     suspend fun deleteTask(task: Task) = taskDao.deleteTask(task)
 
     suspend fun toggleTaskCompletion(task: Task) = taskDao.updateTask(task.copy(isCompleted = !task.isCompleted))
+
+    suspend fun reassignTasksFromCategory(categoryId: Long) {
+        taskDao.reassignTasksFromCategory(categoryId)
+    }
 }

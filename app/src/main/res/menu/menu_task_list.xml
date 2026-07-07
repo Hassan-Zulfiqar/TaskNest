@@ -9,6 +9,13 @@
         app:showAsAction="always" />
 
     <item
+        android:id="@+id/action_categories"
+        android:icon="@drawable/ic_category"
+        android:title="Categories"
+        app:iconTint="@color/icon_tint"
+        app:showAsAction="always" />
+
+    <item
         android:id="@+id/action_settings"
         android:icon="@drawable/ic_settings"
         android:title="@string/settings"

@@ -2,20 +2,30 @@ package com.hassan.tasknest.presentation.addedittask
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.hassan.tasknest.data.local.entity.Category
 import com.hassan.tasknest.data.local.entity.Priority
 import com.hassan.tasknest.data.local.entity.Task
+import com.hassan.tasknest.data.repository.CategoryRepository
 import com.hassan.tasknest.data.repository.TaskRepository
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /** Manages form state and save logic for the add/edit task bottom sheet. */
-class AddEditTaskViewModel(private val taskRepository: TaskRepository) : ViewModel() {
+class AddEditTaskViewModel(
+    private val taskRepository: TaskRepository,
+    private val categoryRepository: CategoryRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddEditTaskUiState())
     val uiState: StateFlow<AddEditTaskUiState> = _uiState.asStateFlow()
+
+    val categories: StateFlow<List<Category>> = categoryRepository.getAllCategories()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     /** Loads an existing task into the form fields, switching the screen into edit mode. */
     fun loadTaskForEdit(taskId: Long) {
@@ -28,6 +38,7 @@ class AddEditTaskViewModel(private val taskRepository: TaskRepository) : ViewMod
                 dueDateMillis = task.dueDate,
                 dueTimeMillis = null,
                 priority = task.priority,
+                categoryId = task.categoryId,
                 isReminderEnabled = task.reminderTime != null,
                 isEditMode = true,
                 isSaveEnabled = task.title.isNotBlank(),
@@ -61,6 +72,11 @@ class AddEditTaskViewModel(private val taskRepository: TaskRepository) : ViewMod
         _uiState.value = _uiState.value.copy(priority = priority)
     }
 
+    /** Updates the selected category, or clears it when null. */
+    fun updateCategory(categoryId: Long?) {
+        _uiState.value = _uiState.value.copy(categoryId = categoryId)
+    }
+
     /** Updates whether a reminder is enabled for this task. */
     fun updateReminderEnabled(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(isReminderEnabled = enabled)
@@ -87,7 +103,7 @@ class AddEditTaskViewModel(private val taskRepository: TaskRepository) : ViewMod
                         priority = state.priority,
                         dueDate = combinedDueDate,
                         reminderTime = null,
-                        categoryId = null,
+                        categoryId = state.categoryId,
                         createdAt = System.currentTimeMillis(),
                         isRecurring = false,
                         recurrenceRule = null
@@ -102,7 +118,7 @@ class AddEditTaskViewModel(private val taskRepository: TaskRepository) : ViewMod
                         priority = state.priority,
                         dueDate = combinedDueDate,
                         reminderTime = null,
-                        categoryId = null,
+                        categoryId = state.categoryId,
                         createdAt = System.currentTimeMillis(),
                         isRecurring = false,
                         recurrenceRule = null

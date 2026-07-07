@@ -9,6 +9,7 @@ data class AddEditTaskUiState(
     val dueDateMillis: Long? = null,
     val dueTimeMillis: Long? = null,
     val priority: Priority = Priority.MEDIUM,
+    val categoryId: Long? = null,
     val isReminderEnabled: Boolean = false,
     val isEditMode: Boolean = false,
     val isSaveEnabled: Boolean = false,

@@ -1,6 +1,7 @@
 package com.hassan.tasknest.presentation.taskdetail
 
 import android.content.res.ColorStateList
+import android.graphics.Color
 import android.graphics.Paint
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -15,8 +16,11 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.hassan.tasknest.R
 import com.hassan.tasknest.data.local.entity.Priority
+import com.hassan.tasknest.data.repository.CategoryRepository
 import com.hassan.tasknest.databinding.FragmentTaskDetailBinding
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -30,6 +34,7 @@ class TaskDetailFragment : Fragment() {
 
     private val viewModel: TaskDetailViewModel by viewModel()
     private val args: TaskDetailFragmentArgs by navArgs()
+    private val categoryRepository: CategoryRepository by inject()
 
     private val dateTimeFormat = SimpleDateFormat("MMM d, yyyy 'at' h:mm a", Locale.getDefault())
 
@@ -124,6 +129,22 @@ class TaskDetailFragment : Fragment() {
                         "Reminder set"
                     } else {
                         "No reminder"
+                    }
+
+                    if (task.categoryId != null) {
+                        viewLifecycleOwner.lifecycleScope.launch {
+                            val category = categoryRepository.getCategoryById(task.categoryId).first()
+                            if (category != null) {
+                                binding.chipCategory.text = category.name
+                                binding.chipCategory.chipBackgroundColor =
+                                    ColorStateList.valueOf(Color.parseColor(category.colorHex))
+                                binding.chipCategory.visibility = View.VISIBLE
+                            } else {
+                                binding.chipCategory.visibility = View.GONE
+                            }
+                        }
+                    } else {
+                        binding.chipCategory.visibility = View.GONE
                     }
                 }
             }
