@@ -11,6 +11,20 @@
         <action
             android:id="@+id/action_taskListFragment_to_addEditTaskBottomSheet"
             app:destination="@id/addEditTaskBottomSheet" />
+        <action
+            android:id="@+id/action_taskListFragment_to_taskDetailFragment"
+            app:destination="@id/taskDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/taskDetailFragment"
+        android:name="com.hassan.tasknest.presentation.taskdetail.TaskDetailFragment">
+        <argument
+            android:name="taskId"
+            app:argType="long" />
+        <action
+            android:id="@+id/action_taskDetailFragment_to_addEditTaskBottomSheet"
+            app:destination="@id/addEditTaskBottomSheet" />
     </fragment>
 
     <dialog

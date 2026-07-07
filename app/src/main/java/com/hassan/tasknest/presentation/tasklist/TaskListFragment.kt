@@ -99,8 +99,9 @@ class TaskListFragment : Fragment() {
     }
 
     private fun onTaskClicked(task: Task) {
+        android.util.Log.d("TaskNest_Debug", "onTaskClicked called for task id=${task.id}")
         findNavController().navigate(
-            TaskListFragmentDirections.actionTaskListFragmentToAddEditTaskBottomSheet(taskId = task.id)
+            TaskListFragmentDirections.actionTaskListFragmentToTaskDetailFragment(taskId = task.id)
         )
     }
 

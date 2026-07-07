@@ -6,6 +6,7 @@ import com.hassan.tasknest.data.local.AppDatabase
 import com.hassan.tasknest.data.local.dao.CategoryDao
 import com.hassan.tasknest.data.local.dao.TaskDao
 import com.hassan.tasknest.presentation.addedittask.AddEditTaskViewModel
+import com.hassan.tasknest.presentation.taskdetail.TaskDetailViewModel
 import com.hassan.tasknest.presentation.tasklist.TaskListViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
@@ -19,4 +20,5 @@ val appModule = module {
     single { TaskRepository(get()) }
     viewModel { TaskListViewModel(get()) }
     viewModel { AddEditTaskViewModel(get()) }
+    viewModel { TaskDetailViewModel(get()) }
 }
