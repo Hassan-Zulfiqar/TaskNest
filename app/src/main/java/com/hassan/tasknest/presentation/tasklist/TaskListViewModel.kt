@@ -4,21 +4,33 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hassan.tasknest.data.local.entity.Priority
 import com.hassan.tasknest.data.local.entity.Task
+import com.hassan.tasknest.data.repository.PreferencesRepository
 import com.hassan.tasknest.data.repository.TaskRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
 /** Manages UI state for the task list screen, including filtering, sorting, and task actions. */
-class TaskListViewModel(private val taskRepository: TaskRepository) : ViewModel() {
+class TaskListViewModel(
+    private val taskRepository: TaskRepository,
+    private val preferencesRepository: PreferencesRepository
+) : ViewModel() {
 
     private val _activeFilter = MutableStateFlow(TaskFilter.ALL)
     private val _sortOrder = MutableStateFlow(TaskSortOrder.DUE_DATE)
+
+    init {
+        viewModelScope.launch {
+            _activeFilter.value = preferencesRepository.getDefaultFilter().first()
+            _sortOrder.value = preferencesRepository.getDefaultSortOrder().first()
+        }
+    }
 
     private val allTasksFlow: Flow<List<Task>> = taskRepository.getAllTasks()
 

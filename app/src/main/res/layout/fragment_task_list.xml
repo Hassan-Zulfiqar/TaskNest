@@ -11,13 +11,13 @@
         android:id="@+id/toolbar"
         android:layout_width="0dp"
         android:layout_height="?attr/actionBarSize"
-        android:background="@android:color/transparent"
+        android:background="@color/brand_primary"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:title="@string/task_list_greeting"
         app:titleTextAppearance="@style/TextAppearance.Material3.TitleLarge"
-        app:titleTextColor="@color/text_primary" />
+        app:titleTextColor="@color/white" />
 
 
     <HorizontalScrollView

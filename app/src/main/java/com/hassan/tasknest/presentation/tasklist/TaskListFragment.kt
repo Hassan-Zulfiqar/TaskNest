@@ -117,7 +117,9 @@ class TaskListFragment : Fragment() {
     }
 
     private fun onSettingsClicked() {
-        // TODO: Navigate to SettingsFragment
+        findNavController().navigate(
+            TaskListFragmentDirections.actionTaskListFragmentToSettingsFragment()
+        )
     }
 
     private fun onAddTaskClicked() {

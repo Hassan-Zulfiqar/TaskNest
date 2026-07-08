@@ -1,10 +1,11 @@
 package com.hassan.tasknest.presentation.tasklist
 
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
+import com.hassan.tasknest.R
 
 /** Handles left-swipe (delete) and right-swipe (toggle complete) gestures on task rows. */
 class TaskSwipeCallback(
@@ -42,9 +43,9 @@ class TaskSwipeCallback(
         if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
             val itemView = viewHolder.itemView
             paint.color = if (dX < 0) {
-                Color.parseColor("#EF4444")
+                ContextCompat.getColor(recyclerView.context, R.color.status_error)
             } else {
-                Color.parseColor("#10B981")
+                ContextCompat.getColor(recyclerView.context, R.color.status_success)
             }
             if (dX < 0) {
                 c.drawRect(

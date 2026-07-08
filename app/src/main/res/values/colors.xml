@@ -1,27 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="brand_primary">#4F46E5</color>
+    <!-- Brand -->
+    <color name="brand_primary">#FE1049FF</color>
+    <color name="brand_primary_light">#E0E7FF</color>
+
+    <!-- Neutrals -->
     <color name="background_light">#F9FAFB</color>
     <color name="text_primary">#111827</color>
     <color name="text_secondary">#6B7280</color>
     <color name="text_muted">#374151</color>
     <color name="icon_tint">#4B5563</color>
-    <color name="priority_high">#EF4444</color>
-    <color name="category_dot_green">#10B981</color>
-    <color name="empty_illustration_tint">#D1D5DB</color>
-    <color name="white">#FFFFFF</color>"
-    <color name="warning">#EF8444</color>
-    <color name="category_work_bg">#E3E9FD</color>
-    <color name="category_personal_bg">#DCFCE7</color>
-    <color name="priority_high_bg">#FEE2E2</color>
-    <color name="priority_medium_bg">#FEF3C7</color>
-    <color name="priority_low_bg">#F3F4F6</color>
-    <color name="swatch_red">#EF4444</color>
-    <color name="swatch_amber">#F59E0B</color>
-    <color name="swatch_green">#10B981</color>
-    <color name="swatch_blue">#3B82F6</color>
-    <color name="swatch_purple">#8B5CF6</color>
-    <color name="swatch_pink">#EC4899</color>
     <color name="divider">#E5E7EB</color>
+    <color name="white">#FFFFFF</color>
+
+    <!-- Status -->
     <color name="status_success">#10B981</color>
+    <color name="category_dot_green">#10B981</color>
+    <color name="status_success_bg">#D1FAE5</color>
     <color name="status_error">#EF4444</color>
+    <color name="status_error_bg">#FEE2E2</color>
+
+    <!-- Priority -->
+    <color name="priority_high">#EF4444</color>
+    <color name="priority_high_bg">#FEE2E2</color>
+    <color name="priority_medium">#F59E0B</color>
+    <color name="priority_medium_bg">#FEF3C7</color>
+    <color name="priority_low">#9CA3AF</color>
+    <color name="priority_low_bg">#F3F4F6</color>
+    <color name="warning">#F59E0B</color>
+
+    <!-- Categories: muted palette -->
+    <color name="category_red">#E08585</color>
+    <color name="category_amber">#E3A96B</color>
+    <color name="category_green">#7FBF9E</color>
+    <color name="category_blue">#7DA6D9</color>
+    <color name="category_purple">#A594D1</color>
+    <color name="category_teal">#6FBFB0</color>
+
+    <!-- Legacy swatch names pointing at new muted values -->
+    <color name="swatch_red">#E08585</color>
+    <color name="swatch_amber">#E3A96B</color>
+    <color name="swatch_green">#7FBF9E</color>
+    <color name="swatch_blue">#7DA6D9</color>
+    <color name="swatch_purple">#A594D1</color>
+    <color name="swatch_pink">#E397B5</color>
+    <color name="category_work_bg">#E0E7FF</color>
+    <color name="category_personal_bg">#D1FAE5</color>
 </resources>

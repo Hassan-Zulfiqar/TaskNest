@@ -28,7 +28,7 @@ class AddEditCategoryBottomSheet : BottomSheetDialogFragment() {
     private val categoryRepository: CategoryRepository by inject()
     private val args: AddEditCategoryBottomSheetArgs by navArgs()
 
-    private var selectedColorHex: String = "#EF4444"
+    private var selectedColorHex: String = "#E08585"
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val dialog = super.onCreateDialog(savedInstanceState) as BottomSheetDialog
@@ -61,12 +61,12 @@ class AddEditCategoryBottomSheet : BottomSheetDialogFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val swatches = listOf(
-            Triple(binding.swatch1, binding.swatch1, "#EF4444"),
-            Triple(binding.swatch2, binding.swatch2, "#F59E0B"),
-            Triple(binding.swatch3, binding.swatch3, "#10B981"),
-            Triple(binding.swatch4, binding.swatch4, "#3B82F6"),
-            Triple(binding.swatch5, binding.swatch5, "#8B5CF6"),
-            Triple(binding.swatch6, binding.swatch6, "#EC4899"),
+            Triple(binding.swatch1, binding.swatch1, "#E08585"),
+            Triple(binding.swatch2, binding.swatch2, "#E3A96B"),
+            Triple(binding.swatch3, binding.swatch3, "#7FBF9E"),
+            Triple(binding.swatch4, binding.swatch4, "#7DA6D9"),
+            Triple(binding.swatch5, binding.swatch5, "#A594D1"),
+            Triple(binding.swatch6, binding.swatch6, "#E397B5"),
         )
 
         fun updateSwatchSelection(selectedHex: String) {

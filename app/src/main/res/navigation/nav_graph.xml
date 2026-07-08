@@ -17,7 +17,14 @@
         <action
             android:id="@+id/action_taskListFragment_to_categoryFragment"
             app:destination="@id/categoryFragment" />
+        <action
+            android:id="@+id/action_taskListFragment_to_settingsFragment"
+            app:destination="@id/settingsFragment" />
     </fragment>
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.hassan.tasknest.presentation.settings.SettingsFragment" />
 
     <fragment
         android:id="@+id/taskDetailFragment"

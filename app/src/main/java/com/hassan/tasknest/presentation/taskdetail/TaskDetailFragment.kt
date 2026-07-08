@@ -136,6 +136,7 @@ class TaskDetailFragment : Fragment() {
                             val category = categoryRepository.getCategoryById(task.categoryId).first()
                             if (category != null) {
                                 binding.chipCategory.text = category.name
+                                binding.chipCategory.setTextColor(Color.WHITE)
                                 binding.chipCategory.chipBackgroundColor =
                                     ColorStateList.valueOf(Color.parseColor(category.colorHex))
                                 binding.chipCategory.visibility = View.VISIBLE
