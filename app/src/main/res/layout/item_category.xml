@@ -64,6 +64,7 @@
             android:contentDescription="Edit Category"
             android:focusable="true"
             android:src="@drawable/ic_edit"
+            app:tint="@color/brand_primary"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@id/btnDeleteCategory"
             app:layout_constraintTop_toTopOf="parent" />

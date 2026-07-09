@@ -1,13 +1,20 @@
 package com.hassan.tasknest.presentation.addedittask
 
+import android.Manifest
+import android.app.Activity
 import android.app.Dialog
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
+import android.speech.RecognizerIntent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.Lifecycle
@@ -36,6 +43,8 @@ import java.util.TimeZone
 /** Bottom sheet for creating a new task (taskId == -1L) or editing an existing one. */
 class AddEditTaskBottomSheet : BottomSheetDialogFragment() {
 
+    private enum class VoiceInputTarget { TITLE, DESCRIPTION }
+
     private var _binding: AddEditTaskBottomSheetBinding? = null
     private val binding get() = _binding!!
 
@@ -46,6 +55,35 @@ class AddEditTaskBottomSheet : BottomSheetDialogFragment() {
     private val timeDisplayFormat = SimpleDateFormat("h:mm a", Locale.getDefault()).also {
         it.timeZone = TimeZone.getTimeZone("UTC")
     }
+
+    private var pendingVoiceInputTarget: VoiceInputTarget? = null
+
+    private val requestMicPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) {
+                launchSpeechRecognizer()
+            } else {
+                Toast.makeText(
+                    requireContext(),
+                    "Microphone permission is needed for voice input",
+                    Toast.LENGTH_SHORT
+                ).show()
+                pendingVoiceInputTarget = null
+            }
+        }
+
+    private val speechRecognizerLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val text = result.data
+                    ?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                    ?.firstOrNull()
+                if (text != null) {
+                    handleRecognizedText(text)
+                }
+            }
+            pendingVoiceInputTarget = null
+        }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val dialog = super.onCreateDialog(savedInstanceState) as BottomSheetDialog
@@ -117,8 +155,54 @@ class AddEditTaskBottomSheet : BottomSheetDialogFragment() {
             viewModel.updateReminderEnabled(isChecked)
         }
 
+        binding.tilTaskTitle.setEndIconOnClickListener {
+            onMicButtonClicked(VoiceInputTarget.TITLE)
+        }
+        binding.tilDescription.setEndIconOnClickListener {
+            onMicButtonClicked(VoiceInputTarget.DESCRIPTION)
+        }
+
         binding.btnClose.setOnClickListener { dismiss() }
         binding.btnSaveTask.setOnClickListener { viewModel.saveTask() }
+    }
+
+    private fun onMicButtonClicked(target: VoiceInputTarget) {
+        pendingVoiceInputTarget = target
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO)
+            == PackageManager.PERMISSION_GRANTED
+        ) {
+            launchSpeechRecognizer()
+        } else {
+            requestMicPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
+
+    private fun launchSpeechRecognizer() {
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+        }
+        if (intent.resolveActivity(requireActivity().packageManager) != null) {
+            speechRecognizerLauncher.launch(intent)
+        } else {
+            Toast.makeText(requireContext(), "Voice input isn't supported on this device", Toast.LENGTH_SHORT).show()
+            pendingVoiceInputTarget = null
+        }
+    }
+
+    // This function is the single seam for upgrading to NLP-based field parsing later — replace the body only, callers do not need to change.
+    private fun handleRecognizedText(text: String) {
+        when (pendingVoiceInputTarget) {
+            VoiceInputTarget.TITLE -> {
+                binding.etTaskTitle.setText(text)
+                viewModel.updateTitle(text)
+            }
+            VoiceInputTarget.DESCRIPTION -> {
+                binding.etDescription.setText(text)
+                viewModel.updateDescription(text)
+            }
+            null -> Unit
+        }
     }
 
     private fun populateCategoryChips(categories: List<Category>) {

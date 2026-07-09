@@ -1,9 +1,15 @@
 package com.hassan.tasknest.presentation.tasklist
 
+import android.graphics.Color
+import android.graphics.PorterDuff
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
+import android.widget.ImageView
+import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -55,12 +61,40 @@ class TaskListFragment : Fragment() {
         binding.toolbar.inflateMenu(R.menu.menu_task_list)
         binding.toolbar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
-                R.id.action_search -> { onSearchClicked(); true }
                 R.id.action_categories -> { onCategoriesClicked(); true }
                 R.id.action_settings -> { onSettingsClicked(); true }
                 else -> false
             }
         }
+
+        val searchItem = binding.toolbar.menu.findItem(R.id.action_search)
+        val searchView = searchItem.actionView as SearchView
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextChange(newText: String?): Boolean {
+                viewModel.setSearchQuery(newText ?: "")
+                return true
+            }
+            override fun onQueryTextSubmit(query: String?): Boolean = true
+        })
+        searchView.findViewById<EditText>(androidx.appcompat.R.id.search_src_text).apply {
+            setTextColor(Color.WHITE)
+            setHintTextColor(Color.argb(180, 255, 255, 255))
+        }
+        searchView.findViewById<ImageView>(androidx.appcompat.R.id.search_mag_icon)
+            .setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
+        searchView.findViewById<ImageView>(androidx.appcompat.R.id.search_close_btn)
+            .setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
+
+        searchItem.setOnActionExpandListener(object : MenuItem.OnActionExpandListener {
+            override fun onMenuItemActionExpand(item: MenuItem): Boolean {
+                binding.toolbar.navigationIcon?.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP)
+                return true
+            }
+            override fun onMenuItemActionCollapse(item: MenuItem): Boolean {
+                binding.toolbar.navigationIcon?.clearColorFilter()
+                return true
+            }
+        })
 
         binding.chipAll.setOnClickListener { viewModel.setFilter(TaskFilter.ALL) }
         binding.chipToday.setOnClickListener { viewModel.setFilter(TaskFilter.TODAY) }
@@ -110,10 +144,6 @@ class TaskListFragment : Fragment() {
         findNavController().navigate(
             TaskListFragmentDirections.actionTaskListFragmentToCategoryFragment()
         )
-    }
-
-    private fun onSearchClicked() {
-        // TODO: Open search UI
     }
 
     private fun onSettingsClicked() {

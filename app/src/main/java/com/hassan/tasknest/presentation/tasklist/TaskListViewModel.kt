@@ -24,6 +24,7 @@ class TaskListViewModel(
 
     private val _activeFilter = MutableStateFlow(TaskFilter.ALL)
     private val _sortOrder = MutableStateFlow(TaskSortOrder.DUE_DATE)
+    private val _searchQuery = MutableStateFlow("")
 
     init {
         viewModelScope.launch {
@@ -37,16 +38,27 @@ class TaskListViewModel(
     val uiState: StateFlow<TaskListUiState> = combine(
         allTasksFlow,
         _activeFilter,
-        _sortOrder
-    ) { tasks, filter, order ->
+        _sortOrder,
+        _searchQuery
+    ) { tasks, filter, order, searchQuery ->
         val filtered = applyFilter(tasks, filter)
-        val sorted = applySort(filtered, order)
-        TaskListUiState(tasks = sorted, activeFilter = filter, sortOrder = order)
+        val searched = if (searchQuery.isNotBlank()) {
+            filtered.filter { it.title.contains(searchQuery, ignoreCase = true) }
+        } else {
+            filtered
+        }
+        val sorted = applySort(searched, order)
+        TaskListUiState(tasks = sorted, activeFilter = filter, sortOrder = order, searchQuery = searchQuery)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = TaskListUiState()
     )
+
+    /** Updates the live search query applied to the task list. */
+    fun setSearchQuery(query: String) {
+        _searchQuery.value = query
+    }
 
     /** Updates the active filter applied to the task list. */
     fun setFilter(filter: TaskFilter) {

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Brand -->
-    <color name="brand_primary">#FE1049FF</color>
+    <color name="brand_primary">#FE407BF2</color>
     <color name="brand_primary_light">#E0E7FF</color>
 
     <!-- Neutrals -->
@@ -30,20 +30,20 @@
     <color name="warning">#F59E0B</color>
 
     <!-- Categories: muted palette -->
-    <color name="category_red">#E08585</color>
-    <color name="category_amber">#E3A96B</color>
-    <color name="category_green">#7FBF9E</color>
-    <color name="category_blue">#7DA6D9</color>
-    <color name="category_purple">#A594D1</color>
-    <color name="category_teal">#6FBFB0</color>
+    <color name="category_red">#F24242</color>
+    <color name="category_amber">#FFB55C</color>
+    <color name="category_green">#52FF9E</color>
+    <color name="category_blue">#5780FF</color>
+    <color name="category_purple">#AC4FF8</color>
+    <color name="category_teal">#8BD1FF</color>
 
     <!-- Legacy swatch names pointing at new muted values -->
-    <color name="swatch_red">#E08585</color>
-    <color name="swatch_amber">#E3A96B</color>
-    <color name="swatch_green">#7FBF9E</color>
-    <color name="swatch_blue">#7DA6D9</color>
-    <color name="swatch_purple">#A594D1</color>
-    <color name="swatch_pink">#E397B5</color>
+    <color name="swatch_red">#F24242</color>
+    <color name="swatch_amber">#FFB55C</color>
+    <color name="swatch_green">#52FF9E</color>
+    <color name="swatch_blue">#5780FF</color>
+    <color name="swatch_purple">#AC4FF8</color>
+    <color name="swatch_pink">#8BD1FF</color>
     <color name="category_work_bg">#E0E7FF</color>
     <color name="category_personal_bg">#D1FAE5</color>
 </resources>
