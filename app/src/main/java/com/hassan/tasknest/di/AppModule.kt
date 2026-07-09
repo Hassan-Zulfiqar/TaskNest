@@ -21,7 +21,7 @@ val appModule = module {
     single<TaskDao> { get<AppDatabase>().taskDao() }
     single<CategoryDao> { get<AppDatabase>().categoryDao() }
     single { UserPreferencesDataStore(androidContext()) }
-    single { TaskRepository(get()) }
+    single { TaskRepository(get(), androidContext()) }
     single { CategoryRepository(get()) }
     single { PreferencesRepository(get()) }
     viewModel { TaskListViewModel(get<TaskRepository>(), get<PreferencesRepository>()) }

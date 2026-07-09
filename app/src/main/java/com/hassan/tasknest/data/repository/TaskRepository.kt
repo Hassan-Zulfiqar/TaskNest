@@ -1,11 +1,17 @@
 package com.hassan.tasknest.data.repository
 
+import android.content.Context
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.workDataOf
 import com.hassan.tasknest.data.local.dao.TaskDao
 import com.hassan.tasknest.data.local.entity.Task
+import com.hassan.tasknest.worker.ReminderWorker
 import kotlinx.coroutines.flow.Flow
+import java.util.concurrent.TimeUnit
 
-/** Mediates between the ViewModel layer and TaskDao for all task-related data operations. */
-class TaskRepository(private val taskDao: TaskDao) {
+class TaskRepository(private val taskDao: TaskDao, private val context: Context) {
 
     fun getAllTasks(): Flow<List<Task>> = taskDao.getAllTasks()
 
@@ -15,15 +21,49 @@ class TaskRepository(private val taskDao: TaskDao) {
 
     fun getCompletedTasks(): Flow<List<Task>> = taskDao.getCompletedTasks()
 
-    suspend fun addTask(task: Task): Long = taskDao.insertTask(task)
+    suspend fun addTask(task: Task): Long {
+        val generatedId = taskDao.insertTask(task)
+        scheduleOrCancelReminder(task.copy(id = generatedId))
+        return generatedId
+    }
 
-    suspend fun updateTask(task: Task) = taskDao.updateTask(task)
+    suspend fun updateTask(task: Task) {
+        taskDao.updateTask(task)
+        scheduleOrCancelReminder(task)
+    }
 
-    suspend fun deleteTask(task: Task) = taskDao.deleteTask(task)
+    suspend fun deleteTask(task: Task) {
+        taskDao.deleteTask(task)
+        WorkManager.getInstance(context).cancelUniqueWork("reminder_task_${task.id}")
+    }
 
     suspend fun toggleTaskCompletion(task: Task) = taskDao.updateTask(task.copy(isCompleted = !task.isCompleted))
 
     suspend fun reassignTasksFromCategory(categoryId: Long) {
         taskDao.reassignTasksFromCategory(categoryId)
+    }
+
+    private fun scheduleOrCancelReminder(task: Task) {
+        val workName = "reminder_task_${task.id}"
+        val dueDate = task.dueDate
+        if (task.reminderTime != null && dueDate != null) {
+            val fireTimeMillis = dueDate - REMINDER_LEAD_TIME_MILLIS
+            if (fireTimeMillis > System.currentTimeMillis()) {
+                val delayMillis = fireTimeMillis - System.currentTimeMillis()
+                val request = OneTimeWorkRequestBuilder<ReminderWorker>()
+                    .setInitialDelay(delayMillis, TimeUnit.MILLISECONDS)
+                    .setInputData(workDataOf(ReminderWorker.TASK_ID_KEY to task.id))
+                    .build()
+                WorkManager.getInstance(context).enqueueUniqueWork(workName, ExistingWorkPolicy.REPLACE, request)
+            } else {
+                WorkManager.getInstance(context).cancelUniqueWork(workName)
+            }
+        } else {
+            WorkManager.getInstance(context).cancelUniqueWork(workName)
+        }
+    }
+
+    companion object {
+        private const val REMINDER_LEAD_TIME_MILLIS = 15 * 60 * 1000L
     }
 }

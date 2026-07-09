@@ -91,6 +91,7 @@ class AddEditTaskViewModel(
             val combinedDueDate = state.dueDateMillis?.let { date ->
                 state.dueTimeMillis?.let { time -> date + time } ?: date
             }
+            val reminderTime = if (state.isReminderEnabled) combinedDueDate else null
 
             if (state.isEditMode) {
                 // TODO: Preserve original createdAt when revisiting edit-mode task loading
@@ -102,7 +103,7 @@ class AddEditTaskViewModel(
                         isCompleted = false,
                         priority = state.priority,
                         dueDate = combinedDueDate,
-                        reminderTime = null,
+                        reminderTime = reminderTime,
                         categoryId = state.categoryId,
                         createdAt = System.currentTimeMillis(),
                         isRecurring = false,
@@ -117,7 +118,7 @@ class AddEditTaskViewModel(
                         isCompleted = false,
                         priority = state.priority,
                         dueDate = combinedDueDate,
-                        reminderTime = null,
+                        reminderTime = reminderTime,
                         categoryId = state.categoryId,
                         createdAt = System.currentTimeMillis(),
                         isRecurring = false,
