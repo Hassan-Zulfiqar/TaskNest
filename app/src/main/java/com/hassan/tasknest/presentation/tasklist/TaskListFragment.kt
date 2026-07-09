@@ -17,6 +17,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.navigation.fragment.findNavController
+import com.google.android.gms.ads.AdRequest
 import com.hassan.tasknest.R
 import com.hassan.tasknest.data.local.entity.Task
 import com.hassan.tasknest.databinding.FragmentTaskListBinding
@@ -103,6 +104,8 @@ class TaskListFragment : Fragment() {
 
         binding.fabAddTask.setOnClickListener { onAddTaskClicked() }
 
+        binding.adViewBanner.loadAd(AdRequest.Builder().build())
+
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { uiState ->
@@ -134,7 +137,6 @@ class TaskListFragment : Fragment() {
     }
 
     private fun onTaskClicked(task: Task) {
-        android.util.Log.d("TaskNest_Debug", "onTaskClicked called for task id=${task.id}")
         findNavController().navigate(
             TaskListFragmentDirections.actionTaskListFragmentToTaskDetailFragment(taskId = task.id)
         )

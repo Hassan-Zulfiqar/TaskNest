@@ -8,4 +8,8 @@
     </style>
 
     <style name="Theme.TaskNest" parent="Base.Theme.TaskNest" />
+
+    <style name="ThemeOverlay.TaskNest.FilterChip" parent="ThemeOverlay.Material3">
+        <item name="chipStyle">@style/Widget.Material3.Chip.Filter</item>
+    </style>
 </resources>

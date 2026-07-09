@@ -28,6 +28,7 @@ import com.google.android.material.chip.Chip
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
+import android.view.ContextThemeWrapper
 import com.hassan.tasknest.R
 import com.hassan.tasknest.data.local.entity.Category
 import com.hassan.tasknest.data.local.entity.Priority
@@ -212,13 +213,20 @@ class AddEditTaskBottomSheet : BottomSheetDialogFragment() {
         chipGroup.removeAllViews()
         chipGroup.isSingleSelection = true
         categories.forEach { category ->
-            val chip = Chip(requireContext()).apply {
+            val chip = Chip(
+                ContextThemeWrapper(requireContext(), R.style.ThemeOverlay_TaskNest_FilterChip),
+                null,
+                com.google.android.material.R.attr.chipStyle
+            ).apply {
                 id = View.generateViewId()
                 text = category.name
                 tag = category.id
                 isCheckable = true
+                isCheckedIconVisible = true
+                checkedIconTint = ColorStateList.valueOf(Color.WHITE)
+                chipStrokeColor = ColorStateList.valueOf(Color.TRANSPARENT)
                 chipBackgroundColor = ColorStateList.valueOf(Color.parseColor(category.colorHex))
-                setTextColor(ContextCompat.getColor(requireContext(), R.color.text_primary))
+                setTextColor(ContextCompat.getColor(requireContext(), R.color.white))
             }
             chipGroup.addView(chip)
         }

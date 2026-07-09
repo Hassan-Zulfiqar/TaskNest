@@ -35,11 +35,10 @@ class ReminderWorker(context: Context, params: WorkerParameters) :
                 .createNotificationChannel(channel)
         }
 
-        // TODO: Replace ic_add with a dedicated notification icon before Play Store submission
         val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
             .setContentTitle("Task Reminder")
             .setContentText("\"${task.title}\" is due in 15 minutes")
-            .setSmallIcon(R.drawable.ic_add)
+            .setSmallIcon(R.drawable.ic_bell)
             .setAutoCancel(true)
             .build()
 

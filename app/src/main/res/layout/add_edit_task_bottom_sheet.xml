@@ -202,10 +202,12 @@
                     android:layout_height="wrap_content"
                     android:text="Low"
                     app:chipIcon="@drawable/shape_circle"
-                    app:chipIconTint="@color/icon_tint"
+                    app:chipIconTint="@color/category_teal"
                     app:chipIconVisible="true"
-                    app:chipIconSize="12dp"
-                    app:checkedIconVisible="false"/>
+                    app:chipIconSize="16dp"
+                    app:checkedIconTint="@color/white"
+                    app:chipStrokeColor="@android:color/transparent"
+                    app:checkedIconVisible="true"/>
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipPriorityMedium"
@@ -214,9 +216,11 @@
                     android:layout_height="wrap_content"
                     android:text="Medium"
                     app:chipIcon="@drawable/shape_circle"
-                    app:chipIconTint="@color/warning"
+                    app:chipIconTint="@color/category_amber"
                     app:chipIconVisible="true"
-                    app:chipIconSize="12dp"/>
+                    app:chipIconSize="16dp"
+                    app:checkedIconTint="@color/white"
+                    app:chipStrokeColor="@android:color/transparent"/>
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipPriorityHigh"
@@ -227,7 +231,9 @@
                     app:chipIcon="@drawable/shape_circle"
                     app:chipIconTint="@color/priority_high"
                     app:chipIconVisible="true"
-                    app:chipIconSize="12dp"
+                    app:chipIconSize="16dp"
+                    app:checkedIconTint="@color/white"
+                    app:chipStrokeColor="@android:color/transparent"
                     />
             </com.google.android.material.chip.ChipGroup>
 
@@ -261,7 +267,9 @@
                         android:text="Work"
                         android:textColor="@color/brand_primary"
                         app:chipBackgroundColor="@color/category_work_bg"
-                        app:chipStrokeWidth="0dp" />
+                        app:chipStrokeWidth="1dp"
+                        app:checkedIconVisible="true"
+                        app:chipStrokeColor="@android:color/transparent"/>
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipCatPersonal"
@@ -271,7 +279,9 @@
                         android:text="Personal"
                         android:textColor="@color/category_dot_green"
                         app:chipBackgroundColor="@color/category_personal_bg"
-                        app:chipStrokeWidth="0dp" />
+                        app:chipStrokeWidth="1dp"
+                        app:checkedIconVisible="true"
+                        app:chipStrokeColor="@android:color/transparent"/>
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipAddCategory"
