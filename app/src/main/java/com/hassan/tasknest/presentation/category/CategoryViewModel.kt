@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /** Manages the list of categories with per-category task counts, and orchestrates safe category deletion. */
@@ -43,20 +44,39 @@ class CategoryViewModel(
         }
     }
 
-    /** Creates a new category if the name is non-blank. */
+    /** Creates a new category if the name is non-blank and not a duplicate. */
     fun addCategory(name: String, colorHex: String) {
         if (name.isBlank()) return
         viewModelScope.launch {
+            val trimmed = name.trim()
+            val existing = categoryRepository.getAllCategories().first()
+            if (existing.any { it.name.trim().equals(trimmed, ignoreCase = true) }) {
+                _uiState.value = _uiState.value.copy(duplicateNameError = true)
+                return@launch
+            }
             categoryRepository.addCategory(Category(name = name, colorHex = colorHex))
+            _uiState.value = _uiState.value.copy(duplicateNameError = false, isSaved = true)
         }
     }
 
-    /** Updates an existing category's name and color if the name is non-blank. */
+    /** Updates an existing category's name and color if the name is non-blank and not a duplicate. */
     fun updateCategory(categoryId: Long, name: String, colorHex: String) {
         if (name.isBlank()) return
         viewModelScope.launch {
+            val trimmed = name.trim()
+            val existing = categoryRepository.getAllCategories().first()
+            if (existing.any { it.id != categoryId && it.name.trim().equals(trimmed, ignoreCase = true) }) {
+                _uiState.value = _uiState.value.copy(duplicateNameError = true)
+                return@launch
+            }
             categoryRepository.updateCategory(Category(id = categoryId, name = name, colorHex = colorHex))
+            _uiState.value = _uiState.value.copy(duplicateNameError = false, isSaved = true)
         }
+    }
+
+    /** Clears a stale duplicate-name error when the user edits the name field again. */
+    fun clearDuplicateNameError() {
+        _uiState.value = _uiState.value.copy(duplicateNameError = false)
     }
 
     /** Deletes immediately if the category has no tasks; otherwise surfaces a blocked state for the Fragment to prompt confirmation. */

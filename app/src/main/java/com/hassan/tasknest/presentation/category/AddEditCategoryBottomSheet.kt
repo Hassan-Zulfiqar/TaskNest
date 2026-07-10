@@ -6,7 +6,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import androidx.core.widget.addTextChangedListener
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.navArgs
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -51,22 +54,22 @@ class AddEditCategoryBottomSheet : BottomSheetDialogFragment() {
         val bottomSheet = dialog?.findViewById<FrameLayout>(
             com.google.android.material.R.id.design_bottom_sheet
         ) ?: return
-        bottomSheet.layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
-        val behavior = BottomSheetBehavior.from(bottomSheet)
-        behavior.state = BottomSheetBehavior.STATE_EXPANDED
-        behavior.skipCollapsed = true
+//        bottomSheet.layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
+//        val behavior = BottomSheetBehavior.from(bottomSheet)
+//        behavior.state = BottomSheetBehavior.STATE_EXPANDED
+//        behavior.skipCollapsed = true
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         val swatches = listOf(
-            Triple(binding.swatch1, binding.swatch1, "#E08585"),
-            Triple(binding.swatch2, binding.swatch2, "#E3A96B"),
-            Triple(binding.swatch3, binding.swatch3, "#7FBF9E"),
-            Triple(binding.swatch4, binding.swatch4, "#7DA6D9"),
-            Triple(binding.swatch5, binding.swatch5, "#A594D1"),
-            Triple(binding.swatch6, binding.swatch6, "#E397B5"),
+            Triple(binding.swatch1, binding.checkSwatch1, "@color/swatch_red"),
+            Triple(binding.swatch2, binding.checkSwatch2, "@color/swatch_amber"),
+            Triple(binding.swatch3, binding.checkSwatch3, "@color/swatch_green"),
+            Triple(binding.swatch4, binding.checkSwatch4, "@color/swatch_blue"),
+            Triple(binding.swatch5, binding.checkSwatch5, "@color/swatch_purple"),
+            Triple(binding.swatch6, binding.checkSwatch6, "@color/swatch_pink"),
         )
 
         fun updateSwatchSelection(selectedHex: String) {
@@ -95,6 +98,23 @@ class AddEditCategoryBottomSheet : BottomSheetDialogFragment() {
             }
         }
 
+        binding.etCategoryName.addTextChangedListener {
+            viewModel.clearDuplicateNameError()
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { uiState ->
+                    binding.tilCategoryName.error = if (uiState.duplicateNameError) {
+                        "A category with this name already exists"
+                    } else {
+                        null
+                    }
+                    if (uiState.isSaved) dismiss()
+                }
+            }
+        }
+
         binding.btnCloseDialog.setOnClickListener { dismiss() }
 
         binding.btnSaveCategory.setOnClickListener {
@@ -104,7 +124,6 @@ class AddEditCategoryBottomSheet : BottomSheetDialogFragment() {
             } else {
                 viewModel.updateCategory(args.categoryId, name, selectedColorHex)
             }
-            dismiss()
         }
     }
 

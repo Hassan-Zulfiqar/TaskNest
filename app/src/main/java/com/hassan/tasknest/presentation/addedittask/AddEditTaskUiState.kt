@@ -13,5 +13,6 @@ data class AddEditTaskUiState(
     val isReminderEnabled: Boolean = false,
     val isEditMode: Boolean = false,
     val isSaveEnabled: Boolean = false,
-    val isTaskSaved: Boolean = false
+    val isTaskSaved: Boolean = false,
+    val duplicateTitleError: Boolean = false
 )

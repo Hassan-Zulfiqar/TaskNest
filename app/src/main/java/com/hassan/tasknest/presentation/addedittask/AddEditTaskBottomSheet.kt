@@ -25,6 +25,8 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.chip.Chip
+import com.google.android.material.datepicker.CalendarConstraints
+import com.google.android.material.datepicker.DateValidatorPointForward
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
@@ -93,6 +95,15 @@ class AddEditTaskBottomSheet : BottomSheetDialogFragment() {
         return dialog
     }
 
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = AddEditTaskBottomSheetBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
     override fun onStart() {
         super.onStart()
         val dialog = dialog as? BottomSheetDialog ?: return
@@ -103,14 +114,7 @@ class AddEditTaskBottomSheet : BottomSheetDialogFragment() {
         behavior.skipCollapsed = true
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        _binding = AddEditTaskBottomSheetBinding.inflate(inflater, container, false)
-        return binding.root
-    }
+
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -293,12 +297,22 @@ class AddEditTaskBottomSheet : BottomSheetDialogFragment() {
 
         binding.btnSaveTask.isEnabled = uiState.isSaveEnabled
 
+        binding.tilTaskTitle.error = if (uiState.duplicateTitleError) {
+            "A task with this title already exists"
+        } else {
+            null
+        }
+
         if (uiState.isTaskSaved) dismiss()
     }
 
     private fun showDatePicker() {
+        val constraints = CalendarConstraints.Builder()
+            .setValidator(DateValidatorPointForward.now())
+            .build()
         val picker = MaterialDatePicker.Builder.datePicker()
             .setTitleText("Select due date")
+            .setCalendarConstraints(constraints)
             .build()
         picker.addOnPositiveButtonClickListener { selection ->
             val calendar = Calendar.getInstance()
@@ -318,8 +332,19 @@ class AddEditTaskBottomSheet : BottomSheetDialogFragment() {
             .setTitleText("Select due time")
             .build()
         picker.addOnPositiveButtonClickListener {
-            val millis = picker.hour * 3600000L + picker.minute * 60000L
-            viewModel.updateDueTime(millis)
+            val pickedTimeMillis = picker.hour * 3600000L + picker.minute * 60000L
+            val dueDateMillis = viewModel.uiState.value.dueDateMillis
+            if (dueDateMillis != null) {
+                val today = Calendar.getInstance()
+                val selected = Calendar.getInstance().apply { timeInMillis = dueDateMillis }
+                val isToday = selected.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
+                    selected.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR)
+                if (isToday && (dueDateMillis + pickedTimeMillis) <= System.currentTimeMillis()) {
+                    Toast.makeText(requireContext(), "Please select a future time", Toast.LENGTH_SHORT).show()
+                    return@addOnPositiveButtonClickListener
+                }
+            }
+            viewModel.updateDueTime(pickedTimeMillis)
         }
         picker.show(parentFragmentManager, "timePicker")
     }

@@ -119,10 +119,13 @@
                     android:backgroundTint="@color/swatch_red" />
 
                 <ImageView
+                    android:id="@+id/checkSwatch1"
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:layout_gravity="center"
+                    android:contentDescription="@null"
                     android:src="@drawable/ic_circle_checked"
+                    android:visibility="visible"
                     app:tint="@color/white" />
             </FrameLayout>
 
@@ -205,7 +208,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:background="@drawable/shape_circle"
-                    android:backgroundTint="@color/swatch_pink" />
+                    android:backgroundTint="@color/swatch_purple" />
 
                 <ImageView
                     android:id="@+id/checkSwatch5"
@@ -228,7 +231,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:background="@drawable/shape_circle"
-                    android:backgroundTint="@color/swatch_purple" />
+                    android:backgroundTint="@color/swatch_pink" />
 
                 <ImageView
                     android:id="@+id/checkSwatch6"

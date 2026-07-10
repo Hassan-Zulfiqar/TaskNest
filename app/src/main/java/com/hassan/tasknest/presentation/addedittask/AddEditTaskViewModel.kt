@@ -49,7 +49,7 @@ class AddEditTaskViewModel(
 
     /** Updates the task title and recomputes whether saving is allowed. */
     fun updateTitle(value: String) {
-        _uiState.value = _uiState.value.copy(title = value, isSaveEnabled = value.isNotBlank())
+        _uiState.value = _uiState.value.copy(title = value, isSaveEnabled = value.isNotBlank(), duplicateTitleError = false)
     }
 
     /** Updates the task description. */
@@ -87,6 +87,16 @@ class AddEditTaskViewModel(
         viewModelScope.launch {
             val state = _uiState.value
             if (state.title.isBlank()) return@launch
+
+            val trimmedTitle = state.title.trim()
+            val allTasks = taskRepository.getAllTasks().first()
+            val isDuplicate = allTasks.any { task ->
+                task.id != state.taskId && task.title.trim().equals(trimmedTitle, ignoreCase = true)
+            }
+            if (isDuplicate) {
+                _uiState.value = _uiState.value.copy(duplicateTitleError = true)
+                return@launch
+            }
 
             val combinedDueDate = state.dueDateMillis?.let { date ->
                 state.dueTimeMillis?.let { time -> date + time } ?: date
