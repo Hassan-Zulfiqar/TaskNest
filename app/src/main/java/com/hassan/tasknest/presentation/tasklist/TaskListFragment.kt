@@ -17,7 +17,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.navigation.fragment.findNavController
-import com.google.android.gms.ads.AdRequest
 import com.hassan.tasknest.R
 import com.hassan.tasknest.data.local.entity.Task
 import com.hassan.tasknest.databinding.FragmentTaskListBinding
@@ -103,8 +102,6 @@ class TaskListFragment : Fragment() {
         binding.chipCompleted.setOnClickListener { viewModel.setFilter(TaskFilter.COMPLETED) }
 
         binding.fabAddTask.setOnClickListener { onAddTaskClicked() }
-
-        binding.adViewBanner.loadAd(AdRequest.Builder().build())
 
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {

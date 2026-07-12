@@ -3,8 +3,10 @@ package com.hassan.tasknest
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import com.google.android.gms.ads.AdRequest
 import com.hassan.tasknest.data.repository.PreferencesRepository
 import com.hassan.tasknest.databinding.ActivityMainAppBinding
+import androidx.navigation.fragment.NavHostFragment
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.koin.android.ext.android.inject
@@ -28,5 +30,30 @@ class MainAppActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainAppBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        setupBottomNavigation()
+
+        val adRequest = AdRequest.Builder().build()
+        binding.adViewBanner.loadAd(adRequest)
+    }
+
+    private fun setupBottomNavigation() {
+        val navHostFragment = supportFragmentManager.findFragmentById(R.id.navHostFragment) as? NavHostFragment
+            ?: return
+        val navController = navHostFragment.navController
+
+        binding.bottomNavigationView.setOnItemSelectedListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.nav_tasks -> {
+                    navController.setGraph(R.navigation.tasks_nav_graph)
+                    true
+                }
+                R.id.nav_notes -> {
+                    navController.setGraph(R.navigation.notes_nav_graph)
+                    true
+                }
+                else -> false
+            }
+        }
     }
 }

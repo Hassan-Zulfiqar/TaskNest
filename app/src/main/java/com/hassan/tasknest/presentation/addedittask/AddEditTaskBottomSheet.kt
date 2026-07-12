@@ -3,6 +3,7 @@ package com.hassan.tasknest.presentation.addedittask
 import android.Manifest
 import android.app.Activity
 import android.app.Dialog
+import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
@@ -21,8 +22,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.navArgs
-import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.chip.Chip
 import com.google.android.material.datepicker.CalendarConstraints
@@ -31,6 +30,8 @@ import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
 import android.view.ContextThemeWrapper
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.hassan.tasknest.R
 import com.hassan.tasknest.data.local.entity.Category
 import com.hassan.tasknest.data.local.entity.Priority
@@ -90,8 +91,16 @@ class AddEditTaskBottomSheet : BottomSheetDialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val dialog = super.onCreateDialog(savedInstanceState) as BottomSheetDialog
-        dialog.behavior.state = BottomSheetBehavior.STATE_EXPANDED
-        dialog.behavior.skipCollapsed = true
+        dialog.setOnShowListener {
+            val bottomSheet = dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+            if (bottomSheet != null) {
+                val behavior = BottomSheetBehavior.from(bottomSheet)
+                behavior.isFitToContents = false
+                behavior.expandedOffset = resources.getDimensionPixelSize(R.dimen.bottom_sheet_top_offset)
+                behavior.state = BottomSheetBehavior.STATE_EXPANDED
+                behavior.skipCollapsed = true
+            }
+        }
         return dialog
     }
 
@@ -106,14 +115,12 @@ class AddEditTaskBottomSheet : BottomSheetDialogFragment() {
 
     override fun onStart() {
         super.onStart()
-        val dialog = dialog as? BottomSheetDialog ?: return
-        val bottomSheet = dialog.findViewById<FrameLayout>(com.google.android.material.R.id.design_bottom_sheet) ?: return
+        val bottomSheet = dialog?.findViewById<FrameLayout>(com.google.android.material.R.id.design_bottom_sheet) ?: return
         bottomSheet.layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
         val behavior = BottomSheetBehavior.from(bottomSheet)
         behavior.state = BottomSheetBehavior.STATE_EXPANDED
         behavior.skipCollapsed = true
     }
-
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -158,6 +165,20 @@ class AddEditTaskBottomSheet : BottomSheetDialogFragment() {
 
         binding.switchReminder.setOnCheckedChangeListener { _, isChecked ->
             viewModel.updateReminderEnabled(isChecked)
+            if (isChecked) {
+                val reminderLeadOptions = listOf(
+                    5 to "5 minutes before",
+                    15 to "15 minutes before",
+                    30 to "30 minutes before",
+                    60 to "1 hour before",
+                    1440 to "1 day before"
+                )
+                AlertDialog.Builder(requireContext())
+                    .setItems(reminderLeadOptions.map { it.second }.toTypedArray()) { _, which ->
+                        viewModel.updateReminderLeadMinutes(reminderLeadOptions[which].first)
+                    }
+                    .show()
+            }
         }
 
         binding.tilTaskTitle.setEndIconOnClickListener {
@@ -291,6 +312,20 @@ class AddEditTaskBottomSheet : BottomSheetDialogFragment() {
         binding.switchReminder.isChecked = uiState.isReminderEnabled
         binding.switchReminder.setOnCheckedChangeListener { _, isChecked ->
             viewModel.updateReminderEnabled(isChecked)
+            if (isChecked) {
+                val reminderLeadOptions = listOf(
+                    5 to "5 minutes before",
+                    15 to "15 minutes before",
+                    30 to "30 minutes before",
+                    60 to "1 hour before",
+                    1440 to "1 day before"
+                )
+                AlertDialog.Builder(requireContext())
+                    .setItems(reminderLeadOptions.map { it.second }.toTypedArray()) { _, which ->
+                        viewModel.updateReminderLeadMinutes(reminderLeadOptions[which].first)
+                    }
+                    .show()
+            }
         }
 
         applyChipSelection(uiState.categoryId)

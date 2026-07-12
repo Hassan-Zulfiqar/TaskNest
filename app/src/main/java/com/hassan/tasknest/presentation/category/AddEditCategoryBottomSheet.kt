@@ -1,6 +1,5 @@
 package com.hassan.tasknest.presentation.category
 
-import android.app.Dialog
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,8 +10,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.navArgs
-import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.hassan.tasknest.data.repository.CategoryRepository
 import com.hassan.tasknest.databinding.AddEditCategoryBottomSheetBinding
@@ -32,13 +29,6 @@ class AddEditCategoryBottomSheet : BottomSheetDialogFragment() {
     private val args: AddEditCategoryBottomSheetArgs by navArgs()
 
     private var selectedColorHex: String = "#E08585"
-
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val dialog = super.onCreateDialog(savedInstanceState) as BottomSheetDialog
-        dialog.behavior.state = BottomSheetBehavior.STATE_EXPANDED
-        dialog.behavior.skipCollapsed = true
-        return dialog
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -64,12 +54,12 @@ class AddEditCategoryBottomSheet : BottomSheetDialogFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val swatches = listOf(
-            Triple(binding.swatch1, binding.checkSwatch1, "@color/swatch_red"),
-            Triple(binding.swatch2, binding.checkSwatch2, "@color/swatch_amber"),
-            Triple(binding.swatch3, binding.checkSwatch3, "@color/swatch_green"),
-            Triple(binding.swatch4, binding.checkSwatch4, "@color/swatch_blue"),
-            Triple(binding.swatch5, binding.checkSwatch5, "@color/swatch_purple"),
-            Triple(binding.swatch6, binding.checkSwatch6, "@color/swatch_pink"),
+            Triple(binding.swatch1, binding.checkSwatch1, "#F24242"),
+            Triple(binding.swatch2, binding.checkSwatch2, "#FFB55C"),
+            Triple(binding.swatch3, binding.checkSwatch3, "#67FFAA"),
+            Triple(binding.swatch4, binding.checkSwatch4, "#5780FF"),
+            Triple(binding.swatch5, binding.checkSwatch5, "#AC4FF8"),
+            Triple(binding.swatch6, binding.checkSwatch6, "#8BD1FF"),
         )
 
         fun updateSwatchSelection(selectedHex: String) {

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/notes_nav_graph"
+    app:startDestination="@id/notesListFragment">
+
+    <fragment
+        android:id="@+id/notesListFragment"
+        android:name="com.hassan.tasknest.presentation.noteslist.NotesListFragment">
+        <action
+            android:id="@+id/actionNotesListFragmentToSettingsFragment"
+            app:destination="@id/settingsFragment" />
+        <action
+            android:id="@+id/actionNotesListFragmentToAddEditNoteFragment"
+            app:destination="@id/addEditNoteFragment" />
+        <action
+            android:id="@+id/actionNotesListFragmentToAddEditNoteFragmentFromFab"
+            app:destination="@id/addEditNoteFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.hassan.tasknest.presentation.settings.SettingsFragment" />
+
+    <fragment
+        android:id="@+id/addEditNoteFragment"
+        android:name="com.hassan.tasknest.presentation.addeditnotes.AddEditNoteFragment">
+        <argument
+            android:name="noteId"
+            app:argType="long"
+            android:defaultValue="-1L" />
+    </fragment>
+
+</navigation>

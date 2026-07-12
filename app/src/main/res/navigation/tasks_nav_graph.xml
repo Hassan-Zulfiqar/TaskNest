@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/tasks_nav_graph"
+    app:startDestination="@id/taskListFragment">
+
+    <fragment
+        android:id="@+id/taskListFragment"
+        android:name="com.hassan.tasknest.presentation.tasklist.TaskListFragment"
+        android:label="Tasks">
+        <action
+            android:id="@+id/action_taskListFragment_to_addEditTaskBottomSheet"
+            app:destination="@id/addEditTaskBottomSheet" />
+        <action
+            android:id="@+id/action_taskListFragment_to_taskDetailFragment"
+            app:destination="@id/taskDetailFragment" />
+        <action
+            android:id="@+id/action_taskListFragment_to_categoryFragment"
+            app:destination="@id/categoryFragment" />
+        <action
+            android:id="@+id/action_taskListFragment_to_settingsFragment"
+            app:destination="@id/settingsFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.hassan.tasknest.presentation.settings.SettingsFragment" />
+
+    <fragment
+        android:id="@+id/taskDetailFragment"
+        android:name="com.hassan.tasknest.presentation.taskdetail.TaskDetailFragment">
+        <argument
+            android:name="taskId"
+            app:argType="long" />
+        <action
+            android:id="@+id/action_taskDetailFragment_to_addEditTaskBottomSheet"
+            app:destination="@id/addEditTaskBottomSheet" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/categoryFragment"
+        android:name="com.hassan.tasknest.presentation.category.CategoryFragment">
+        <action
+            android:id="@+id/action_categoryFragment_to_addEditCategoryBottomSheet"
+            app:destination="@id/addEditCategoryBottomSheet" />
+    </fragment>
+
+    <dialog
+        android:id="@+id/addEditCategoryBottomSheet"
+        android:name="com.hassan.tasknest.presentation.category.AddEditCategoryBottomSheet">
+        <argument
+            android:name="categoryId"
+            app:argType="long"
+            android:defaultValue="-1L" />
+    </dialog>
+
+    <dialog
+        android:id="@+id/addEditTaskBottomSheet"
+        android:name="com.hassan.tasknest.presentation.addedittask.AddEditTaskBottomSheet">
+        <argument
+            android:name="taskId"
+            app:argType="long"
+            android:defaultValue="-1L" />
+    </dialog>
+
+</navigation>

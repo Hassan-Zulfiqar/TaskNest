@@ -231,7 +231,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:background="@drawable/shape_circle"
-                    android:backgroundTint="@color/swatch_pink" />
+                    android:backgroundTint="@color/swatch_teal" />
 
                 <ImageView
                     android:id="@+id/checkSwatch6"

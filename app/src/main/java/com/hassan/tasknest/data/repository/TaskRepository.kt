@@ -47,7 +47,7 @@ class TaskRepository(private val taskDao: TaskDao, private val context: Context)
         val workName = "reminder_task_${task.id}"
         val dueDate = task.dueDate
         if (task.reminderTime != null && dueDate != null) {
-            val fireTimeMillis = dueDate - REMINDER_LEAD_TIME_MILLIS
+            val fireTimeMillis = dueDate - task.reminderLeadMinutes * 60 * 1000L
             if (fireTimeMillis > System.currentTimeMillis()) {
                 val delayMillis = fireTimeMillis - System.currentTimeMillis()
                 val request = OneTimeWorkRequestBuilder<ReminderWorker>()
@@ -61,9 +61,5 @@ class TaskRepository(private val taskDao: TaskDao, private val context: Context)
         } else {
             WorkManager.getInstance(context).cancelUniqueWork(workName)
         }
-    }
-
-    companion object {
-        private const val REMINDER_LEAD_TIME_MILLIS = 15 * 60 * 1000L
     }
 }

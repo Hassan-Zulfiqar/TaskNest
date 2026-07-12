@@ -25,6 +25,15 @@ class ReminderWorker(context: Context, params: WorkerParameters) :
 
         val task = taskRepository.getTaskById(taskId).first() ?: return Result.success()
 
+        val formattedLeadTime = when (task.reminderLeadMinutes) {
+            5 -> "5 minutes"
+            15 -> "15 minutes"
+            30 -> "30 minutes"
+            60 -> "1 hour"
+            1440 -> "1 day"
+            else -> "${task.reminderLeadMinutes} minutes"
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
@@ -37,7 +46,7 @@ class ReminderWorker(context: Context, params: WorkerParameters) :
 
         val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
             .setContentTitle("Task Reminder")
-            .setContentText("\"${task.title}\" is due in 15 minutes")
+            .setContentText("\"${task.title}\" is due in $formattedLeadTime")
             .setSmallIcon(R.drawable.ic_bell)
             .setAutoCancel(true)
             .build()

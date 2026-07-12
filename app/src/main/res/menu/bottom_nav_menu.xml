@@ -1,0 +1,10 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_tasks"
+        android:icon="@drawable/ic_circle_checked"
+        android:title="@string/nav_tasks" />
+    <item
+        android:id="@+id/nav_notes"
+        android:icon="@drawable/ic_notes"
+        android:title="@string/nav_notes" />
+</menu>

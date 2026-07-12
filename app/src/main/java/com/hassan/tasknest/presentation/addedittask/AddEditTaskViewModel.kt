@@ -40,6 +40,7 @@ class AddEditTaskViewModel(
                 priority = task.priority,
                 categoryId = task.categoryId,
                 isReminderEnabled = task.reminderTime != null,
+                reminderLeadMinutes = task.reminderLeadMinutes,
                 isEditMode = true,
                 isSaveEnabled = task.title.isNotBlank(),
                 isTaskSaved = false
@@ -82,6 +83,11 @@ class AddEditTaskViewModel(
         _uiState.value = _uiState.value.copy(isReminderEnabled = enabled)
     }
 
+    /** Updates the selected reminder lead time in minutes. */
+    fun updateReminderLeadMinutes(minutes: Int) {
+        _uiState.value = _uiState.value.copy(reminderLeadMinutes = minutes)
+    }
+
     /** Persists the current form state as a new or updated task, then signals completion. */
     fun saveTask() {
         viewModelScope.launch {
@@ -114,6 +120,7 @@ class AddEditTaskViewModel(
                         priority = state.priority,
                         dueDate = combinedDueDate,
                         reminderTime = reminderTime,
+                        reminderLeadMinutes = state.reminderLeadMinutes,
                         categoryId = state.categoryId,
                         createdAt = System.currentTimeMillis(),
                         isRecurring = false,
@@ -129,6 +136,7 @@ class AddEditTaskViewModel(
                         priority = state.priority,
                         dueDate = combinedDueDate,
                         reminderTime = reminderTime,
+                        reminderLeadMinutes = state.reminderLeadMinutes,
                         categoryId = state.categoryId,
                         createdAt = System.currentTimeMillis(),
                         isRecurring = false,

@@ -15,6 +15,7 @@ data class Task(
 	val priority: Priority = Priority.MEDIUM,
 	val dueDate: Long? = null,
 	val reminderTime: Long? = null,
+	val reminderLeadMinutes: Int = 15,
 	val categoryId: Long? = null,
 	val createdAt: Long = System.currentTimeMillis(),
 	val isRecurring: Boolean = false,
