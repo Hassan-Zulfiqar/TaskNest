@@ -115,8 +115,8 @@
 
         <ImageView
             android:id="@+id/ivEmptyIllustration"
-            android:layout_width="200dp"
-            android:layout_height="200dp"
+            android:layout_width="180dp"
+            android:layout_height="180dp"
             android:layout_marginBottom="16dp"
             android:alpha="0.6"
             android:src="@drawable/ic_empty_tasks"

@@ -16,6 +16,7 @@ import com.hassan.tasknest.presentation.noteslist.NotesListViewModel
 import com.hassan.tasknest.presentation.settings.SettingsViewModel
 import com.hassan.tasknest.presentation.taskdetail.TaskDetailViewModel
 import com.hassan.tasknest.presentation.tasklist.TaskListViewModel
+import com.hassan.tasknest.voice.VoskModelManager
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
@@ -37,4 +38,5 @@ val appModule = module {
     viewModel { CategoryViewModel(get<CategoryRepository>(), get<TaskRepository>()) }
     viewModel { NotesListViewModel(get()) }
     viewModel { SettingsViewModel(get(), androidContext()) }
+    single { VoskModelManager(androidContext()) }
 }

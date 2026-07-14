@@ -49,8 +49,8 @@
 
         <ImageView
             android:id="@+id/ivEmptyIllustration"
-            android:layout_width="160dp"
-            android:layout_height="160dp"
+            android:layout_width="180dp"
+            android:layout_height="180dp"
             android:layout_marginBottom="16dp"
             android:alpha="0.8"
             android:src="@drawable/ic_empty_tasks"
@@ -58,7 +58,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_chainStyle="packed"/>
+            app:layout_constraintVertical_chainStyle="packed" />
 
         <TextView
             android:id="@+id/tvEmptyTitle"
