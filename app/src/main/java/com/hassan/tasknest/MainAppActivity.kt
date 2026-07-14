@@ -1,9 +1,9 @@
 package com.hassan.tasknest
 
 import android.os.Bundle
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
-import com.google.android.gms.ads.AdRequest
 import com.hassan.tasknest.data.repository.PreferencesRepository
 import com.hassan.tasknest.databinding.ActivityMainAppBinding
 import androidx.navigation.fragment.NavHostFragment
@@ -32,9 +32,6 @@ class MainAppActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         setupBottomNavigation()
-
-        val adRequest = AdRequest.Builder().build()
-        binding.adViewBanner.loadAd(adRequest)
     }
 
     private fun setupBottomNavigation() {
@@ -53,6 +50,16 @@ class MainAppActivity : AppCompatActivity() {
                     true
                 }
                 else -> false
+            }
+        }
+
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            binding.bottomNavigationView.visibility = if (
+                destination.id == R.id.taskListFragment || destination.id == R.id.notesListFragment
+            ) {
+                View.VISIBLE
+            } else {
+                View.GONE
             }
         }
     }

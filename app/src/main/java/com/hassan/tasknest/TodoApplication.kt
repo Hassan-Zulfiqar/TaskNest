@@ -1,7 +1,6 @@
 package com.hassan.tasknest
 
 import android.app.Application
-import com.google.android.gms.ads.MobileAds
 import com.hassan.tasknest.di.appModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
@@ -15,6 +14,5 @@ class TodoApplication : Application() {
             androidContext(this@TodoApplication)
             modules(appModule)
         }
-        MobileAds.initialize(this) {}
     }
 }
