@@ -2,7 +2,6 @@ package com.hassan.tasknest.presentation.addedittask
 
 import android.Manifest
 import android.app.Activity
-import android.app.Dialog
 import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -11,33 +10,30 @@ import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.speech.RecognizerIntent
+import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.widget.addTextChangedListener
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.chip.Chip
 import com.google.android.material.datepicker.CalendarConstraints
 import com.google.android.material.datepicker.DateValidatorPointForward
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
-import android.view.ContextThemeWrapper
-import androidx.navigation.fragment.findNavController
-import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.hassan.tasknest.R
 import com.hassan.tasknest.data.local.entity.Category
 import com.hassan.tasknest.data.local.entity.Priority
-import com.hassan.tasknest.databinding.AddEditTaskBottomSheetBinding
+import com.hassan.tasknest.databinding.FragmentAddEditTaskBinding
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.text.SimpleDateFormat
@@ -46,16 +42,16 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
-/** Bottom sheet for creating a new task (taskId == -1L) or editing an existing one. */
-class AddEditTaskBottomSheet : BottomSheetDialogFragment() {
+/** Fragment for creating a new task (taskId == -1L) or editing an existing one. */
+class AddEditTaskFragment : Fragment() {
 
     private enum class VoiceInputTarget { TITLE, DESCRIPTION }
 
-    private var _binding: AddEditTaskBottomSheetBinding? = null
-    private val binding get() = _binding!!
+    private var _binding: FragmentAddEditTaskBinding? = null
+    private val binding get() = requireNotNull(_binding)
 
     private val viewModel: AddEditTaskViewModel by viewModel()
-    private val args: AddEditTaskBottomSheetArgs by navArgs()
+    private val args: AddEditTaskFragmentArgs by navArgs()
 
     private val dateDisplayFormat = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
     private val timeDisplayFormat = SimpleDateFormat("h:mm a", Locale.getDefault()).also {
@@ -102,39 +98,14 @@ class AddEditTaskBottomSheet : BottomSheetDialogFragment() {
             pendingVoiceInputTarget = null
         }
 
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val dialog = super.onCreateDialog(savedInstanceState) as BottomSheetDialog
-        dialog.setOnShowListener {
-            val bottomSheet = dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
-            if (bottomSheet != null) {
-                val behavior = BottomSheetBehavior.from(bottomSheet)
-                behavior.isFitToContents = false
-                behavior.expandedOffset = resources.getDimensionPixelSize(R.dimen.bottom_sheet_top_offset)
-                behavior.state = BottomSheetBehavior.STATE_EXPANDED
-                behavior.skipCollapsed = true
-            }
-        }
-        return dialog
-    }
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = AddEditTaskBottomSheetBinding.inflate(inflater, container, false)
+        _binding = FragmentAddEditTaskBinding.inflate(inflater, container, false)
         return binding.root
     }
-
-    override fun onStart() {
-        super.onStart()
-        val bottomSheet = dialog?.findViewById<FrameLayout>(com.google.android.material.R.id.design_bottom_sheet) ?: return
-        bottomSheet.layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
-        val behavior = BottomSheetBehavior.from(bottomSheet)
-        behavior.state = BottomSheetBehavior.STATE_EXPANDED
-        behavior.skipCollapsed = true
-    }
-
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -142,6 +113,8 @@ class AddEditTaskBottomSheet : BottomSheetDialogFragment() {
         if (args.taskId != -1L && savedInstanceState == null) {
             viewModel.loadTaskForEdit(args.taskId)
         }
+
+        binding.toolbar.setNavigationOnClickListener { findNavController().navigateUp() }
 
         setupListeners()
 
@@ -186,13 +159,11 @@ class AddEditTaskBottomSheet : BottomSheetDialogFragment() {
         }
 
         binding.chipAddCategory.setOnClickListener {
-            dismiss()
             findNavController().navigate(
-                AddEditTaskBottomSheetDirections.actionAddEditTaskBottomSheetToCategoryFragment()
+                AddEditTaskFragmentDirections.actionAddEditTaskFragmentToAddEditCategoryBottomSheet()
             )
         }
 
-        binding.btnClose.setOnClickListener { dismiss() }
         binding.btnSaveTask.setOnClickListener { viewModel.saveTask() }
     }
 
@@ -331,13 +302,15 @@ class AddEditTaskBottomSheet : BottomSheetDialogFragment() {
     }
 
     private fun renderState(uiState: AddEditTaskUiState) {
-        binding.tvHeaderTitle.text = if (uiState.isEditMode) "Edit Task" else "Add Task"
+        binding.toolbar.title = if (uiState.isEditMode) "Edit Task" else "Add Task"
         binding.btnSaveTask.text = if (uiState.isEditMode) "Update Task" else "Save Task"
 
-        if (binding.etTaskTitle.text.toString() != uiState.title) {
+        if (binding.etTaskTitle.text.toString() != uiState.title)
+        {
             binding.etTaskTitle.setText(uiState.title)
         }
-        if (binding.etDescription.text.toString() != uiState.description) {
+        if (binding.etDescription.text.toString() != uiState.description)
+        {
             binding.etDescription.setText(uiState.description)
         }
 
@@ -375,7 +348,7 @@ class AddEditTaskBottomSheet : BottomSheetDialogFragment() {
             null
         }
 
-        if (uiState.isTaskSaved) dismiss()
+        if (uiState.isTaskSaved) findNavController().navigateUp()
     }
 
     private fun showDatePicker() {

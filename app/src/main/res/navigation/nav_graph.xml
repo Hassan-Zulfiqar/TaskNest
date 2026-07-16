@@ -56,7 +56,7 @@
 
     <dialog
         android:id="@+id/addEditTaskBottomSheet"
-        android:name="com.hassan.tasknest.presentation.addedittask.AddEditTaskBottomSheet">
+        android:name="com.hassan.tasknest.presentation.addedittask.AddEditTaskFragment">
         <argument
             android:name="taskId"
             app:argType="long"

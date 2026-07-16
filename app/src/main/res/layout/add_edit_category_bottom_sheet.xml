@@ -41,8 +41,8 @@
 
         <ImageView
             android:id="@+id/btnCloseDialog"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
             android:contentDescription="Close"

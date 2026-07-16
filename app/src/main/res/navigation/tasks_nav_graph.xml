@@ -54,16 +54,16 @@
             android:defaultValue="-1L" />
     </dialog>
 
-    <dialog
+    <fragment
         android:id="@+id/addEditTaskBottomSheet"
-        android:name="com.hassan.tasknest.presentation.addedittask.AddEditTaskBottomSheet">
+        android:name="com.hassan.tasknest.presentation.addedittask.AddEditTaskFragment">
         <argument
             android:name="taskId"
             app:argType="long"
             android:defaultValue="-1L" />
         <action
-            android:id="@+id/action_addEditTaskBottomSheet_to_categoryFragment"
-            app:destination="@id/categoryFragment" />
-    </dialog>
+            android:id="@+id/action_addEditTaskFragment_to_addEditCategoryBottomSheet"
+            app:destination="@id/addEditCategoryBottomSheet" />
+    </fragment>
 
 </navigation>
