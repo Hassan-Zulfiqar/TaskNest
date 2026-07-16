@@ -121,9 +121,13 @@ class TaskDetailFragment : Fragment() {
 
                     binding.tvDateTimeValue.text = task.dueDate?.let {
                         dateTimeFormat.format(Date(it))
-                    } ?: ""
+                    } ?: "No due date"
 
-                    binding.tvDescriptionValue.text = task.description ?: ""
+                    binding.tvDescriptionValue.text = if (task.description.isNullOrBlank()) {
+                        "No description added"
+                    } else {
+                        task.description
+                    }
 
                     binding.tvReminderValue.text = if (task.reminderTime != null) {
                         "Reminder set"

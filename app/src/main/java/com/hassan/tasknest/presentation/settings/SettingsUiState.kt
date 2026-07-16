@@ -7,5 +7,6 @@ data class SettingsUiState(
     val themeMode: String = "SYSTEM",
     val defaultSortOrder: TaskSortOrder = TaskSortOrder.DUE_DATE,
     val defaultFilter: TaskFilter = TaskFilter.ALL,
-    val isNotificationPermissionGranted: Boolean = false
+    val isNotificationPermissionGranted: Boolean = false,
+    val isMicPermissionGranted: Boolean = false
 )

@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.speech.RecognizerIntent
 import android.view.LayoutInflater
@@ -30,6 +31,7 @@ import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
 import android.view.ContextThemeWrapper
+import androidx.navigation.fragment.findNavController
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.hassan.tasknest.R
@@ -73,6 +75,17 @@ class AddEditTaskBottomSheet : BottomSheetDialogFragment() {
                     Toast.LENGTH_SHORT
                 ).show()
                 pendingVoiceInputTarget = null
+            }
+        }
+
+    private val requestNotificationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (!granted) {
+                Toast.makeText(
+                    requireContext(),
+                    "Notifications permission is needed for reminders to appear",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
 
@@ -126,8 +139,6 @@ class AddEditTaskBottomSheet : BottomSheetDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.chipAddCategory.visibility = View.GONE
-
         if (args.taskId != -1L && savedInstanceState == null) {
             viewModel.loadTaskForEdit(args.taskId)
         }
@@ -164,21 +175,7 @@ class AddEditTaskBottomSheet : BottomSheetDialogFragment() {
         binding.chipPriorityHigh.setOnClickListener { viewModel.updatePriority(Priority.HIGH) }
 
         binding.switchReminder.setOnCheckedChangeListener { _, isChecked ->
-            viewModel.updateReminderEnabled(isChecked)
-            if (isChecked) {
-                val reminderLeadOptions = listOf(
-                    5 to "5 minutes before",
-                    15 to "15 minutes before",
-                    30 to "30 minutes before",
-                    60 to "1 hour before",
-                    1440 to "1 day before"
-                )
-                AlertDialog.Builder(requireContext())
-                    .setItems(reminderLeadOptions.map { it.second }.toTypedArray()) { _, which ->
-                        viewModel.updateReminderLeadMinutes(reminderLeadOptions[which].first)
-                    }
-                    .show()
-            }
+            handleReminderToggleChange(isChecked)
         }
 
         binding.tilTaskTitle.setEndIconOnClickListener {
@@ -186,6 +183,13 @@ class AddEditTaskBottomSheet : BottomSheetDialogFragment() {
         }
         binding.tilDescription.setEndIconOnClickListener {
             onMicButtonClicked(VoiceInputTarget.DESCRIPTION)
+        }
+
+        binding.chipAddCategory.setOnClickListener {
+            dismiss()
+            findNavController().navigate(
+                AddEditTaskBottomSheetDirections.actionAddEditTaskBottomSheetToCategoryFragment()
+            )
         }
 
         binding.btnClose.setOnClickListener { dismiss() }
@@ -200,6 +204,53 @@ class AddEditTaskBottomSheet : BottomSheetDialogFragment() {
             launchSpeechRecognizer()
         } else {
             requestMicPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
+
+    private fun handleReminderToggleChange(isChecked: Boolean) {
+        if (isChecked) {
+            val dueDateMillis = viewModel.uiState.value.dueDateMillis
+            if (dueDateMillis == null) {
+                Toast.makeText(
+                    requireContext(),
+                    "Please select a due date and time before setting a reminder",
+                    Toast.LENGTH_SHORT
+                ).show()
+
+                binding.switchReminder.setOnCheckedChangeListener(null)
+                binding.switchReminder.isChecked = false
+                binding.switchReminder.setOnCheckedChangeListener { _, newIsChecked ->
+                    handleReminderToggleChange(newIsChecked)
+                }
+                viewModel.updateReminderEnabled(false)
+                return
+            }
+        }
+
+        viewModel.updateReminderEnabled(isChecked)
+        if (isChecked) {
+            requestNotificationPermissionIfNeeded()
+            val reminderLeadOptions = listOf(
+                5 to "5 minutes before",
+                15 to "15 minutes before",
+                30 to "30 minutes before",
+                60 to "1 hour before",
+                1440 to "1 day before"
+            )
+            AlertDialog.Builder(requireContext())
+                .setItems(reminderLeadOptions.map { it.second }.toTypedArray()) { _, which ->
+                    viewModel.updateReminderLeadMinutes(reminderLeadOptions[which].first)
+                }
+                .show()
+        }
+    }
+
+    private fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
 
@@ -311,21 +362,7 @@ class AddEditTaskBottomSheet : BottomSheetDialogFragment() {
         binding.switchReminder.setOnCheckedChangeListener(null)
         binding.switchReminder.isChecked = uiState.isReminderEnabled
         binding.switchReminder.setOnCheckedChangeListener { _, isChecked ->
-            viewModel.updateReminderEnabled(isChecked)
-            if (isChecked) {
-                val reminderLeadOptions = listOf(
-                    5 to "5 minutes before",
-                    15 to "15 minutes before",
-                    30 to "30 minutes before",
-                    60 to "1 hour before",
-                    1440 to "1 day before"
-                )
-                AlertDialog.Builder(requireContext())
-                    .setItems(reminderLeadOptions.map { it.second }.toTypedArray()) { _, which ->
-                        viewModel.updateReminderLeadMinutes(reminderLeadOptions[which].first)
-                    }
-                    .show()
-            }
+            handleReminderToggleChange(isChecked)
         }
 
         applyChipSelection(uiState.categoryId)

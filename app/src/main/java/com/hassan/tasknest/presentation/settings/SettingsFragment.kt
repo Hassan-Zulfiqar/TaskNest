@@ -27,6 +27,8 @@ class SettingsFragment : Fragment() {
     private var _binding: FragmentSettingsBinding? = null
     private val binding get() = _binding!!
 
+    private var isApplyingThemeState: Boolean = false
+
     private val viewModel: SettingsViewModel by viewModel()
 
     override fun onCreateView(
@@ -47,7 +49,9 @@ class SettingsFragment : Fragment() {
         binding.rowDefaultSort.tvRowLabel.text = "Default Sort"
         binding.rowDefaultFilter.tvRowLabel.text = "Default Filter"
         binding.rowNotificationPermission.tvRowLabel.text = "Notification Permission"
+        binding.rowMicPermission.tvRowLabel.text = "Microphone Permission"
         binding.rowPrivacyPolicy.tvRowLabel.text = "Privacy Policy"
+        binding.rowTermsConditions.tvRowLabel.text = "Terms & Conditions"
         binding.rowAppVersion.tvRowLabel.text = "App Version"
 
         // App version row — non-interactive
@@ -59,6 +63,7 @@ class SettingsFragment : Fragment() {
 
         // Theme toggle
         binding.toggleGroupTheme.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (isApplyingThemeState) return@addOnButtonCheckedListener
             if (!isChecked) return@addOnButtonCheckedListener
             val mode = when (checkedId) {
                 R.id.btnThemeSystem -> "SYSTEM"
@@ -83,9 +88,23 @@ class SettingsFragment : Fragment() {
             startActivity(intent)
         }
 
+        // Microphone permission row — open the app's general system settings page
+        binding.rowMicPermission.root.setOnClickListener {
+            val intent = Intent(
+                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.fromParts("package", requireContext().packageName, null)
+            )
+            startActivity(intent)
+        }
+
         // Privacy policy row
         binding.rowPrivacyPolicy.root.setOnClickListener {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://example.com/privacy")))
+        }
+
+        // Terms & Conditions row
+        binding.rowTermsConditions.root.setOnClickListener {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://example.com/terms")))
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -97,7 +116,9 @@ class SettingsFragment : Fragment() {
                         else -> R.id.btnThemeSystem
                     }
                     if (binding.toggleGroupTheme.checkedButtonId != targetThemeId) {
+                        isApplyingThemeState = true
                         binding.toggleGroupTheme.check(targetThemeId)
+                        isApplyingThemeState = false
                     }
 
                     binding.rowDefaultSort.tvRowValue.text = sortOrderLabel(uiState.defaultSortOrder)
@@ -112,6 +133,16 @@ class SettingsFragment : Fragment() {
                             if (notifGranted) R.color.status_success else R.color.status_error
                         )
                     )
+
+                    val micGranted = uiState.isMicPermissionGranted
+                    binding.rowMicPermission.tvRowValue.text =
+                        if (micGranted) "Enabled" else "Disabled"
+                    binding.rowMicPermission.tvRowValue.setTextColor(
+                        ContextCompat.getColor(
+                            requireContext(),
+                            if (micGranted) R.color.status_success else R.color.status_error
+                        )
+                    )
                 }
             }
         }
@@ -119,7 +150,7 @@ class SettingsFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        viewModel.refreshNotificationPermissionStatus()
+        viewModel.refreshPermissionStatuses()
     }
 
     override fun onDestroyView() {

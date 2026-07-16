@@ -1,5 +1,6 @@
 package com.hassan.tasknest.presentation.settings
 
+import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
@@ -23,18 +24,21 @@ class SettingsViewModel(
 ) : ViewModel() {
 
     private val _notificationPermission = MutableStateFlow(checkNotificationPermission())
+    private val _micPermission = MutableStateFlow(checkMicPermission())
 
     val uiState: StateFlow<SettingsUiState> = combine(
         preferencesRepository.getThemeMode(),
         preferencesRepository.getDefaultSortOrder(),
         preferencesRepository.getDefaultFilter(),
-        _notificationPermission
-    ) { themeMode, sortOrder, filter, notifGranted ->
+        _notificationPermission,
+        _micPermission
+    ) { themeMode, sortOrder, filter, notifGranted, micGranted ->
         SettingsUiState(
             themeMode = themeMode,
             defaultSortOrder = sortOrder,
             defaultFilter = filter,
-            isNotificationPermissionGranted = notifGranted
+            isNotificationPermissionGranted = notifGranted,
+            isMicPermissionGranted = micGranted
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsUiState())
 
@@ -53,9 +57,10 @@ class SettingsViewModel(
         viewModelScope.launch { preferencesRepository.setDefaultFilter(filter) }
     }
 
-    /** Re-checks the OS notification permission and updates uiState; call this in Fragment.onResume. */
-    fun refreshNotificationPermissionStatus() {
+    /** Re-checks the app permission statuses and updates uiState; call this in Fragment.onResume. */
+    fun refreshPermissionStatuses() {
         _notificationPermission.value = checkNotificationPermission()
+        _micPermission.value = checkMicPermission()
     }
 
     private fun checkNotificationPermission(): Boolean {
@@ -67,5 +72,12 @@ class SettingsViewModel(
         } else {
             true
         }
+    }
+
+    private fun checkMicPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.RECORD_AUDIO
+        ) == PackageManager.PERMISSION_GRANTED
     }
 }

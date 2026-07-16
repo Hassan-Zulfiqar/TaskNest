@@ -60,6 +60,7 @@ class NotesListFragment : Fragment() {
             setTextColor(Color.WHITE)
             setHintTextColor(Color.argb(180, 255, 255, 255))
         }
+        binding.toolbar.menu.findItem(R.id.action_search).icon?.setTint(Color.WHITE)
         searchView.findViewById<ImageView>(androidx.appcompat.R.id.search_mag_icon)
             .setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
         searchView.findViewById<ImageView>(androidx.appcompat.R.id.search_close_btn)
@@ -107,13 +108,19 @@ class NotesListFragment : Fragment() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { uiState ->
                     noteAdapter.submitNotes(uiState.notes)
+                    binding.progressLoading.visibility = if (uiState.isLoading) View.VISIBLE else View.GONE
 
-                    if (uiState.notes.isNotEmpty()) {
-                        binding.rvNotes.visibility = View.VISIBLE
+                    if (uiState.isLoading) {
+                        binding.rvNotes.visibility = View.GONE
                         binding.emptyStateContainer.visibility = View.GONE
                     } else {
-                        binding.rvNotes.visibility = View.GONE
-                        binding.emptyStateContainer.visibility = View.VISIBLE
+                        if (uiState.notes.isNotEmpty()) {
+                            binding.rvNotes.visibility = View.VISIBLE
+                            binding.emptyStateContainer.visibility = View.GONE
+                        } else {
+                            binding.rvNotes.visibility = View.GONE
+                            binding.emptyStateContainer.visibility = View.VISIBLE
+                        }
                     }
                 }
             }

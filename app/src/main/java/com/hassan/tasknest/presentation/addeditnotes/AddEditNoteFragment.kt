@@ -208,7 +208,10 @@ class AddEditNoteFragment : Fragment() {
             }
 
             if (model == null) {
-                Toast.makeText(requireContext(), "Speech recognition unavailable", Toast.LENGTH_SHORT).show()
+                val modelState = voskModelManager.modelState.value
+                val message = (modelState as? VoskModelState.Error)?.message
+                    ?: "Speech recognition unavailable"
+                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
                 return@launch
             }
 

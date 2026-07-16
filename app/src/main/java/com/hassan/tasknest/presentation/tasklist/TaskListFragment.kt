@@ -107,13 +107,19 @@ class TaskListFragment : Fragment() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { uiState ->
                     taskAdapter.submitTasks(uiState.tasks)
+                    binding.progressLoading.visibility = if (uiState.isLoading) View.VISIBLE else View.GONE
 
-                    if (uiState.tasks.isNotEmpty()) {
-                        binding.rvTasks.visibility = View.VISIBLE
+                    if (uiState.isLoading) {
+                        binding.rvTasks.visibility = View.GONE
                         binding.emptyStateContainer.visibility = View.GONE
                     } else {
-                        binding.rvTasks.visibility = View.GONE
-                        binding.emptyStateContainer.visibility = View.VISIBLE
+                        if (uiState.tasks.isNotEmpty()) {
+                            binding.rvTasks.visibility = View.VISIBLE
+                            binding.emptyStateContainer.visibility = View.GONE
+                        } else {
+                            binding.rvTasks.visibility = View.GONE
+                            binding.emptyStateContainer.visibility = View.VISIBLE
+                        }
                     }
 
                     val targetChip = when (uiState.activeFilter) {

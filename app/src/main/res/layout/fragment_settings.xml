@@ -35,7 +35,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingHorizontal="24dp"
+            android:paddingHorizontal="16dp"
             android:paddingTop="16dp"
             android:paddingBottom="40dp">
 
@@ -61,7 +61,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="12dp">
 
                     <TextView
                         android:layout_width="match_parent"
@@ -159,7 +159,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
                 android:layout_marginStart="4dp"
-                android:text="Notifications"
+                android:text="Permissions"
                 android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
                 android:textColor="@color/text_secondary" />
 
@@ -172,9 +172,23 @@
                 app:cardElevation="0dp"
                 app:strokeWidth="0dp">
 
-                <include
-                    android:id="@+id/rowNotificationPermission"
-                    layout="@layout/item_settings_row" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <include
+                        android:id="@+id/rowNotificationPermission"
+                        layout="@layout/item_settings_row" />
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginHorizontal="16dp"
+                        android:background="@color/divider" />
+                    <include
+                        android:id="@+id/rowMicPermission"
+                        layout="@layout/item_settings_row" />
+                </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>
 
@@ -202,6 +216,16 @@
 
                     <include
                         android:id="@+id/rowPrivacyPolicy"
+                        layout="@layout/item_settings_row" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginHorizontal="16dp"
+                        android:background="@color/divider" />
+
+                    <include
+                        android:id="@+id/rowTermsConditions"
                         layout="@layout/item_settings_row" />
 
                     <View
