@@ -12,4 +12,25 @@
     <style name="ThemeOverlay.TaskNest.FilterChip" parent="ThemeOverlay.Material3">
         <item name="chipStyle">@style/Widget.Material3.Chip.Filter</item>
     </style>
+
+    <style name="ThemeOverlay.TaskNest.DatePickerSpinner" parent="Theme.Material3.DayNight.Dialog">
+        <item name="android:datePickerMode">spinner</item>
+        <item name="colorPrimary">@color/brand_primary</item>
+        <item name="android:colorPrimary">@color/brand_primary</item>
+        <item name="android:colorAccent">@color/brand_primary</item>
+        <item name="colorAccent">@color/brand_primary</item>
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:windowBackground">@color/white</item>
+    </style>
+
+    <style name="ThemeOverlay.TaskNest.TimePickerSpinner" parent="Theme.Material3.DayNight.Dialog">
+        <item name="android:timePickerMode">spinner</item>
+        <item name="colorPrimary">@color/brand_primary</item>
+        <item name="android:colorPrimary">@color/brand_primary</item>
+        <item name="android:colorAccent">@color/brand_primary</item>
+        <item name="colorAccent">@color/brand_primary</item>
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:windowBackground">@color/white</item>
+    </style>
+
 </resources>

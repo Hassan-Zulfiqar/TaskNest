@@ -20,6 +20,8 @@ import androidx.navigation.fragment.findNavController
 import com.hassan.tasknest.R
 import com.hassan.tasknest.data.local.entity.Task
 import com.hassan.tasknest.databinding.FragmentTaskListBinding
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -28,6 +30,7 @@ class TaskListFragment : Fragment() {
 
     private var _binding: FragmentTaskListBinding? = null
     private val binding get() = _binding!!
+    private var loadingJob: Job? = null
 
     private val viewModel: TaskListViewModel by viewModel()
 
@@ -106,8 +109,22 @@ class TaskListFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { uiState ->
+                    binding.filterScrollView.visibility = if (!uiState.isLoading && uiState.hasAnyTasks) View.VISIBLE else View.GONE
+
                     taskAdapter.submitTasks(uiState.tasks)
-                    binding.progressLoading.visibility = if (uiState.isLoading) View.VISIBLE else View.GONE
+                    //binding.progressLoading.visibility = if (uiState.isLoading) View.VISIBLE else View.GONE
+                    if (uiState.isLoading) {
+                        if (loadingJob == null) {
+                            loadingJob = viewLifecycleOwner.lifecycleScope.launch {
+                                delay(150) // only show spinner if loading takes longer than this
+                                binding.progressLoading.visibility = View.VISIBLE
+                            }
+                        }
+                    } else {
+                        loadingJob?.cancel()
+                        loadingJob = null
+                        binding.progressLoading.visibility = View.GONE
+                    }
 
                     if (uiState.isLoading) {
                         binding.rvTasks.visibility = View.GONE

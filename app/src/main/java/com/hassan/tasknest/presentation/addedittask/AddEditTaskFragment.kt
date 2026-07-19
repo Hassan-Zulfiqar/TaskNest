@@ -3,6 +3,8 @@ package com.hassan.tasknest.presentation.addedittask
 import android.Manifest
 import android.app.Activity
 import android.app.AlertDialog
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
@@ -84,6 +86,14 @@ class AddEditTaskFragment : Fragment() {
                 ).show()
             }
         }
+
+    private val reminderLeadOptions = listOf(
+        5 to "5 minutes before",
+        15 to "15 minutes before",
+        30 to "30 minutes before",
+        60 to "1 hour before",
+        1440 to "1 day before"
+    )
 
     private val speechRecognizerLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -181,10 +191,11 @@ class AddEditTaskFragment : Fragment() {
     private fun handleReminderToggleChange(isChecked: Boolean) {
         if (isChecked) {
             val dueDateMillis = viewModel.uiState.value.dueDateMillis
-            if (dueDateMillis == null) {
+            val dueTimeMillis = viewModel.uiState.value.dueTimeMillis
+            if (dueDateMillis == null || dueTimeMillis == null) {
                 Toast.makeText(
                     requireContext(),
-                    "Please select a due date and time before setting a reminder",
+                    "Please select both a due date and time before setting a reminder",
                     Toast.LENGTH_SHORT
                 ).show()
 
@@ -201,19 +212,29 @@ class AddEditTaskFragment : Fragment() {
         viewModel.updateReminderEnabled(isChecked)
         if (isChecked) {
             requestNotificationPermissionIfNeeded()
-            val reminderLeadOptions = listOf(
-                5 to "5 minutes before",
-                15 to "15 minutes before",
-                30 to "30 minutes before",
-                60 to "1 hour before",
-                1440 to "1 day before"
-            )
-            AlertDialog.Builder(requireContext())
-                .setItems(reminderLeadOptions.map { it.second }.toTypedArray()) { _, which ->
-                    viewModel.updateReminderLeadMinutes(reminderLeadOptions[which].first)
-                }
-                .show()
+            showReminderLeadTimeDialog()
         }
+    }
+
+    private fun showReminderLeadTimeDialog() {
+        val currentLeadMinutes = viewModel.uiState.value.reminderLeadMinutes
+        val checkedItem = reminderLeadOptions.indexOfFirst { it.first == currentLeadMinutes }
+            .takeIf { it >= 0 } ?: 0
+        var selectedLeadMinutes = currentLeadMinutes
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Reminder Lead Time")
+            .setSingleChoiceItems(
+                reminderLeadOptions.map { it.second }.toTypedArray(),
+                checkedItem
+            ) { _, which ->
+                selectedLeadMinutes = reminderLeadOptions[which].first
+            }
+            .setPositiveButton("OK") { _, _ ->
+                viewModel.updateReminderLeadMinutes(selectedLeadMinutes)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun requestNotificationPermissionIfNeeded() {
@@ -341,6 +362,19 @@ class AddEditTaskFragment : Fragment() {
         applyChipSelection(uiState.categoryId)
 
         binding.btnSaveTask.isEnabled = uiState.isSaveEnabled
+        val saveButtonBackgroundColor = if (uiState.isSaveEnabled) {
+            ContextCompat.getColor(requireContext(), R.color.brand_primary)
+        } else {
+            ContextCompat.getColor(requireContext(), R.color.divider)
+        }
+        binding.btnSaveTask.backgroundTintList = ColorStateList.valueOf(saveButtonBackgroundColor)
+        binding.btnSaveTask.setTextColor(
+            if (uiState.isSaveEnabled) {
+                ContextCompat.getColor(requireContext(), R.color.white)
+            } else {
+                ContextCompat.getColor(requireContext(), R.color.text_secondary)
+            }
+        )
 
         binding.tilTaskTitle.error = if (uiState.duplicateTitleError) {
             "A task with this title already exists"
@@ -352,46 +386,87 @@ class AddEditTaskFragment : Fragment() {
     }
 
     private fun showDatePicker() {
-        val constraints = CalendarConstraints.Builder()
-            .setValidator(DateValidatorPointForward.now())
-            .build()
-        val picker = MaterialDatePicker.Builder.datePicker()
-            .setTitleText("Select due date")
-            .setCalendarConstraints(constraints)
-            .build()
-        picker.addOnPositiveButtonClickListener { selection ->
-            val calendar = Calendar.getInstance()
-            calendar.timeInMillis = selection
-            calendar.set(Calendar.HOUR_OF_DAY, 0)
-            calendar.set(Calendar.MINUTE, 0)
-            calendar.set(Calendar.SECOND, 0)
-            calendar.set(Calendar.MILLISECOND, 0)
-            viewModel.updateDueDate(calendar.timeInMillis)
+        val currentDueDateMillis = viewModel.uiState.value.dueDateMillis
+        val calendar = Calendar.getInstance().apply {
+            if (currentDueDateMillis != null) {
+                timeInMillis = currentDueDateMillis
+            }
         }
-        picker.show(parentFragmentManager, "datePicker")
+        val initialYear = calendar.get(Calendar.YEAR)
+        val initialMonth = calendar.get(Calendar.MONTH)
+        val initialDay = calendar.get(Calendar.DAY_OF_MONTH)
+
+        val datePickerDialog = DatePickerDialog(
+            requireContext(),
+            R.style.ThemeOverlay_TaskNest_DatePickerSpinner,
+            { _, year, month, dayOfMonth ->
+                val selectedCalendar = Calendar.getInstance().apply {
+                    set(Calendar.YEAR, year)
+                    set(Calendar.MONTH, month)
+                    set(Calendar.DAY_OF_MONTH, dayOfMonth)
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                viewModel.updateDueDate(selectedCalendar.timeInMillis)
+            },
+            initialYear,
+            initialMonth,
+            initialDay
+        )
+        datePickerDialog.datePicker.minDate = System.currentTimeMillis()
+        datePickerDialog.datePicker.calendarViewShown = false
+        datePickerDialog.setOnShowListener {
+            datePickerDialog.getButton(DatePickerDialog.BUTTON_POSITIVE)
+                ?.setTextColor(ContextCompat.getColor(requireContext(), R.color.brand_primary))
+            datePickerDialog.getButton(DatePickerDialog.BUTTON_NEGATIVE)
+                ?.setTextColor(ContextCompat.getColor(requireContext(), R.color.brand_primary))
+        }
+
+        datePickerDialog.show()
     }
 
     private fun showTimePicker() {
-        val picker = MaterialTimePicker.Builder()
-            .setTimeFormat(TimeFormat.CLOCK_12H)
-            .setTitleText("Select due time")
-            .build()
-        picker.addOnPositiveButtonClickListener {
-            val pickedTimeMillis = picker.hour * 3600000L + picker.minute * 60000L
-            val dueDateMillis = viewModel.uiState.value.dueDateMillis
-            if (dueDateMillis != null) {
-                val today = Calendar.getInstance()
-                val selected = Calendar.getInstance().apply { timeInMillis = dueDateMillis }
-                val isToday = selected.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
-                    selected.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR)
-                if (isToday && (dueDateMillis + pickedTimeMillis) <= System.currentTimeMillis()) {
-                    Toast.makeText(requireContext(), "Please select a future time", Toast.LENGTH_SHORT).show()
-                    return@addOnPositiveButtonClickListener
-                }
+        val currentDueTimeMillis = viewModel.uiState.value.dueTimeMillis
+        val calendar = Calendar.getInstance().apply {
+            if (currentDueTimeMillis != null) {
+                timeInMillis = currentDueTimeMillis
             }
-            viewModel.updateDueTime(pickedTimeMillis)
         }
-        picker.show(parentFragmentManager, "timePicker")
+        val initialHour = calendar.get(Calendar.HOUR_OF_DAY)
+        val initialMinute = calendar.get(Calendar.MINUTE)
+
+        val timePickerDialog = TimePickerDialog(
+            requireContext(),
+            R.style.ThemeOverlay_TaskNest_TimePickerSpinner,
+            { _, hourOfDay, minute ->
+                val pickedTimeMillis = hourOfDay * 3600000L + minute * 60000L
+                val dueDateMillis = viewModel.uiState.value.dueDateMillis
+                if (dueDateMillis != null) {
+                    val today = Calendar.getInstance()
+                    val selected = Calendar.getInstance().apply { timeInMillis = dueDateMillis }
+                    val isToday = selected.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
+                            selected.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR)
+                    if (isToday && (dueDateMillis + pickedTimeMillis) <= System.currentTimeMillis()) {
+                        Toast.makeText(requireContext(), "Please select a future time", Toast.LENGTH_SHORT).show()
+                        return@TimePickerDialog
+                    }
+                }
+                viewModel.updateDueTime(pickedTimeMillis)
+            },
+            initialHour,
+            initialMinute,
+            false
+        )
+        timePickerDialog.setOnShowListener {
+            timePickerDialog.getButton(TimePickerDialog.BUTTON_POSITIVE)
+                ?.setTextColor(ContextCompat.getColor(requireContext(), R.color.brand_primary))
+            timePickerDialog.getButton(TimePickerDialog.BUTTON_NEGATIVE)
+                ?.setTextColor(ContextCompat.getColor(requireContext(), R.color.brand_primary))
+        }
+
+        timePickerDialog.show()
     }
 
     override fun onDestroyView() {

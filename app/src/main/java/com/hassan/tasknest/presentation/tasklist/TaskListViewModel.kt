@@ -41,6 +41,7 @@ class TaskListViewModel(
         _sortOrder,
         _searchQuery
     ) { tasks, filter, order, searchQuery ->
+        val hasAnyTasks = tasks.isNotEmpty()
         val filtered = applyFilter(tasks, filter)
         val searched = if (searchQuery.isNotBlank()) {
             filtered.filter { it.title.contains(searchQuery, ignoreCase = true) }
@@ -48,7 +49,14 @@ class TaskListViewModel(
             filtered
         }
         val sorted = applySort(searched, order)
-        TaskListUiState(tasks = sorted, activeFilter = filter, sortOrder = order, searchQuery = searchQuery)
+        TaskListUiState(
+            tasks = sorted,
+            activeFilter = filter,
+            isLoading = false,
+            sortOrder = order,
+            searchQuery = searchQuery,
+            hasAnyTasks = hasAnyTasks
+        )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),

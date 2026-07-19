@@ -30,13 +30,22 @@ import java.util.Locale
 class TaskDetailFragment : Fragment() {
 
     private var _binding: FragmentTaskDetailBinding? = null
-    private val binding get() = _binding!!
+    private val binding get() = requireNotNull(_binding)
 
     private val viewModel: TaskDetailViewModel by viewModel()
     private val args: TaskDetailFragmentArgs by navArgs()
     private val categoryRepository: CategoryRepository by inject()
 
     private val dateTimeFormat = SimpleDateFormat("MMM d, yyyy 'at' h:mm a", Locale.getDefault())
+
+    private fun formatReminderLeadTime(leadMinutes: Int?): String = when (leadMinutes) {
+        5 -> "5 minutes before"
+        15 -> "15 minutes before"
+        30 -> "30 minutes before"
+        60 -> "1 hour before"
+        1440 -> "1 day before"
+        else -> "Reminder set"
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -130,7 +139,7 @@ class TaskDetailFragment : Fragment() {
                     }
 
                     binding.tvReminderValue.text = if (task.reminderTime != null) {
-                        "Reminder set"
+                        formatReminderLeadTime(task.reminderLeadMinutes)
                     } else {
                         "No reminder"
                     }

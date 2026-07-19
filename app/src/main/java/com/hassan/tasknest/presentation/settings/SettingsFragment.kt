@@ -25,7 +25,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 class SettingsFragment : Fragment() {
 
     private var _binding: FragmentSettingsBinding? = null
-    private val binding get() = _binding!!
+    private val binding get() = requireNotNull(_binding)
 
     private var isApplyingThemeState: Boolean = false
 
@@ -143,6 +143,17 @@ class SettingsFragment : Fragment() {
                             if (micGranted) R.color.status_success else R.color.status_error
                         )
                     )
+
+                    binding.rowNotificationPermission.root.visibility =
+                        if (uiState.isNotificationPermissionGranted) View.GONE else View.VISIBLE
+                    binding.rowMicPermission.root.visibility =
+                        if (uiState.isMicPermissionGranted) View.GONE else View.VISIBLE
+                    binding.dividerPermissions.visibility =
+                        if (uiState.isNotificationPermissionGranted || uiState.isMicPermissionGranted) View.GONE else View.VISIBLE
+                    binding.cardPermissions.visibility =
+                        if (uiState.isNotificationPermissionGranted && uiState.isMicPermissionGranted) View.GONE else View.VISIBLE
+                    binding.tvPermissionsSectionLabel.visibility =
+                        if (uiState.isNotificationPermissionGranted && uiState.isMicPermissionGranted) View.GONE else View.VISIBLE
                 }
             }
         }

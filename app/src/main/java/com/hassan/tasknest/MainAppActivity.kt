@@ -4,10 +4,16 @@ import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.NavHostFragment
 import com.hassan.tasknest.data.repository.PreferencesRepository
 import com.hassan.tasknest.databinding.ActivityMainAppBinding
-import androidx.navigation.fragment.NavHostFragment
+import com.hassan.tasknest.voice.VoskModelManager
+import com.hassan.tasknest.voice.VoskModelState
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.koin.android.ext.android.inject
 
@@ -15,6 +21,7 @@ import org.koin.android.ext.android.inject
 class MainAppActivity : AppCompatActivity() {
 
     private val preferencesRepository: PreferencesRepository by inject()
+    private val voskModelManager: VoskModelManager by inject()
     private lateinit var binding: ActivityMainAppBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,7 +38,30 @@ class MainAppActivity : AppCompatActivity() {
         binding = ActivityMainAppBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        observeVoskModelState()
         setupBottomNavigation()
+    }
+
+    private fun observeVoskModelState() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                voskModelManager.modelState.collect { state ->
+                    when (state) {
+                        is VoskModelState.Downloading -> {
+                            binding.voskStatusBar.visibility = View.VISIBLE
+                            binding.voskStatusText.text = "Preparing speech model... ${state.progressPercent}%"
+                        }
+                        VoskModelState.Unzipping -> {
+                            binding.voskStatusBar.visibility = View.VISIBLE
+                            binding.voskStatusText.text = "Preparing speech model..."
+                        }
+                        else -> {
+                            binding.voskStatusBar.visibility = View.GONE
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private fun setupBottomNavigation() {

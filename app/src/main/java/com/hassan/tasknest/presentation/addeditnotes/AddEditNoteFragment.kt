@@ -137,6 +137,17 @@ class AddEditNoteFragment : Fragment() {
             return
         }
 
+        if (voskModelManager.modelState.value is VoskModelState.Downloading ||
+            voskModelManager.modelState.value is VoskModelState.Unzipping
+        ) {
+            Toast.makeText(
+                requireContext(),
+                "Please wait while your speech model is preparing...",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO)
             == PackageManager.PERMISSION_GRANTED
         ) {
@@ -180,32 +191,7 @@ class AddEditNoteFragment : Fragment() {
 
     private fun prepareAndStartVoskDictation() {
         viewLifecycleOwner.lifecycleScope.launch {
-            val shouldShowDownloadOverlay = voskModelManager.getLoadedModel() == null
-            if (shouldShowDownloadOverlay) {
-                binding.modelDownloadOverlay.visibility = View.VISIBLE
-                binding.tvDownloadStatus.text = "Preparing speech model..."
-            }
-            val progressJob = launch {
-                voskModelManager.modelState.collect { state ->
-                    when (state) {
-                        is VoskModelState.Downloading -> {
-                            binding.progressModelDownload.progress = state.progressPercent
-                            binding.tvDownloadStatus.text = "Downloading speech model... ${state.progressPercent}%"
-                        }
-                        VoskModelState.Unzipping -> {
-                            binding.tvDownloadStatus.text = "Preparing speech model..."
-                        }
-                        else -> Unit
-                    }
-                }
-            }
-
-            val model = try {
-                voskModelManager.ensureModelReady()
-            } finally {
-                progressJob.cancelAndJoin()
-                binding.modelDownloadOverlay.visibility = View.GONE
-            }
+            val model = voskModelManager.ensureModelReady()
 
             if (model == null) {
                 val modelState = voskModelManager.modelState.value

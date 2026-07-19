@@ -20,6 +20,8 @@ import androidx.navigation.fragment.findNavController
 import com.hassan.tasknest.data.local.entity.Note
 import com.hassan.tasknest.R
 import com.hassan.tasknest.databinding.FragmentNotesListBinding
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -28,6 +30,7 @@ class NotesListFragment : Fragment() {
 
     private var _binding: FragmentNotesListBinding? = null
     private val binding get() = requireNotNull(_binding)
+    private var loadingJob: Job? = null
 
     private val viewModel: NotesListViewModel by viewModel()
     private lateinit var noteAdapter: NoteAdapter
@@ -108,7 +111,20 @@ class NotesListFragment : Fragment() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { uiState ->
                     noteAdapter.submitNotes(uiState.notes)
-                    binding.progressLoading.visibility = if (uiState.isLoading) View.VISIBLE else View.GONE
+                    //binding.progressLoading.visibility = if (uiState.isLoading) View.VISIBLE else View.GONE
+
+                    if (uiState.isLoading) {
+                        if (loadingJob == null) {
+                            loadingJob = viewLifecycleOwner.lifecycleScope.launch {
+                                delay(150) // only show spinner if loading takes longer than this
+                                binding.progressLoading.visibility = View.VISIBLE
+                            }
+                        }
+                    } else {
+                        loadingJob?.cancel()
+                        loadingJob = null
+                        binding.progressLoading.visibility = View.GONE
+                    }
 
                     if (uiState.isLoading) {
                         binding.rvNotes.visibility = View.GONE

@@ -1,7 +1,12 @@
 package com.hassan.tasknest.voice
 
 import android.content.Context
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.sync.Mutex
@@ -19,14 +24,34 @@ import java.util.zip.ZipInputStream
 
 class VoskModelManager(private val context: Context) {
 
+	private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 	private val _modelState = MutableStateFlow<VoskModelState>(VoskModelState.Idle)
 	val modelState: StateFlow<VoskModelState> = _modelState
 
 	private val loadMutex = Mutex()
+	private var inProgressJob: Deferred<Model?>? = null
 
 	private var loadedModel: Model? = null
 
-	suspend fun ensureModelReady(): Model? = withContext(Dispatchers.IO) {
+	suspend fun ensureModelReady(): Model? {
+		val existingJob = inProgressJob
+		if (existingJob != null && existingJob.isActive) {
+			return existingJob.await()
+		}
+
+		val newJob = scope.async {
+			doEnsureModelReady()
+		}
+		inProgressJob = newJob
+
+		return try {
+			newJob.await()
+		} finally {
+			inProgressJob = null
+		}
+	}
+
+	private suspend fun doEnsureModelReady(): Model? = withContext(Dispatchers.IO) {
 		loadMutex.withLock {
 			loadedModel?.let { return@withLock it }
 
