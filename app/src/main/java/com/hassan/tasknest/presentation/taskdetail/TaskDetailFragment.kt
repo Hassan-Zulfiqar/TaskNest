@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
@@ -75,7 +76,14 @@ class TaskDetailFragment : Fragment() {
                     true
                 }
                 R.id.action_delete -> {
-                    viewModel.deleteTask()
+                    AlertDialog.Builder(requireContext())
+                        .setTitle("Delete Task")
+                        .setMessage("Are you sure you want to delete this task?")
+                        .setPositiveButton("Delete") { _, _ ->
+                            viewModel.deleteTask()
+                        }
+                        .setNegativeButton("Cancel", null)
+                        .show()
                     true
                 }
                 else -> false

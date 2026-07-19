@@ -23,7 +23,6 @@ import com.hassan.tasknest.databinding.FragmentAddEditNoteBinding
 import com.hassan.tasknest.voice.VoskDictationController
 import com.hassan.tasknest.voice.VoskModelManager
 import com.hassan.tasknest.voice.VoskModelState
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -79,10 +78,7 @@ class AddEditNoteFragment : Fragment() {
         })
 
         binding.btnSaveNote.setOnClickListener { viewModel.saveNote() }
-        binding.btnDeleteNote.setOnClickListener {
-            viewModel.deleteNote()
-            findNavController().navigateUp()
-        }
+        binding.btnDeleteNote.setOnClickListener { showDeleteConfirmationDialog() }
         binding.btnMicToggle.setOnClickListener { onMicToggleClicked() }
         updateMicButtonUi(false)
 
@@ -162,6 +158,18 @@ class AddEditNoteFragment : Fragment() {
         dictationController = null
         isRecording = false
         updateMicButtonUi(false)
+    }
+
+    private fun showDeleteConfirmationDialog() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Delete Note")
+            .setMessage("Are you sure you want to delete this note?")
+            .setPositiveButton("Delete") { _, _ ->
+                viewModel.deleteNote()
+                findNavController().navigateUp()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun hasUnsavedChanges(): Boolean {

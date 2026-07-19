@@ -9,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.ImageView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
@@ -20,6 +21,7 @@ import androidx.navigation.fragment.findNavController
 import com.hassan.tasknest.R
 import com.hassan.tasknest.data.local.entity.Task
 import com.hassan.tasknest.databinding.FragmentTaskListBinding
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -29,7 +31,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 class TaskListFragment : Fragment() {
 
     private var _binding: FragmentTaskListBinding? = null
-    private val binding get() = _binding!!
+    private val binding get() = requireNotNull(_binding)
     private var loadingJob: Job? = null
 
     private val viewModel: TaskListViewModel by viewModel()
@@ -50,14 +52,35 @@ class TaskListFragment : Fragment() {
 
         taskAdapter = TaskAdapter(
             onTaskClick = { task -> onTaskClicked(task) },
-            onCheckboxToggle = { task -> viewModel.toggleTaskCompletion(task) }
+            onCheckboxToggle = { task ->
+                val wasCompleted = task.isCompleted
+                viewModel.toggleTaskCompletion(task)
+                showCompletionToggleSnackbar(task, wasCompleted)
+            }
         )
         binding.rvTasks.layoutManager = LinearLayoutManager(requireContext())
         binding.rvTasks.adapter = taskAdapter
 
         val swipeCallback = TaskSwipeCallback(
-            onSwipeLeft = { position -> viewModel.deleteTask(taskAdapter.getTaskAt(position)) },
-            onSwipeRight = { position -> viewModel.toggleTaskCompletion(taskAdapter.getTaskAt(position)) }
+            onSwipeLeft = { position ->
+                val task = taskAdapter.getTaskAt(position)
+                AlertDialog.Builder(requireContext())
+                    .setTitle("Delete Task")
+                    .setMessage("Are you sure you want to delete this task?")
+                    .setPositiveButton("Delete") { _, _ ->
+                        viewModel.deleteTask(task)
+                    }
+                    .setNegativeButton("Cancel") { _, _ ->
+                        taskAdapter.notifyItemChanged(position)
+                    }
+                    .show()
+            },
+            onSwipeRight = { position ->
+                val task = taskAdapter.getTaskAt(position)
+                val wasCompleted = task.isCompleted
+                viewModel.toggleTaskCompletion(task)
+                showCompletionToggleSnackbar(task, wasCompleted)
+            }
         )
         ItemTouchHelper(swipeCallback).attachToRecyclerView(binding.rvTasks)
 
@@ -154,6 +177,23 @@ class TaskListFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    private fun showCompletionToggleSnackbar(task: Task, wasCompleted: Boolean) {
+        val message = if (wasCompleted) {
+            "Task marked incomplete"
+        } else {
+            "Task marked complete"
+        }
+
+        Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG)
+            .setAction("Undo") {
+                // task.copy(isCompleted = !wasCompleted) reconstructs a task object representing the
+                // CURRENT (post-original-toggle) state, so that toggleTaskCompletion's internal flip
+                // correctly reverts it back to wasCompleted, rather than operating on a stale pre-toggle object.
+                viewModel.toggleTaskCompletion(task.copy(isCompleted = !wasCompleted))
+            }
+            .show()
     }
 
     private fun onTaskClicked(task: Task) {

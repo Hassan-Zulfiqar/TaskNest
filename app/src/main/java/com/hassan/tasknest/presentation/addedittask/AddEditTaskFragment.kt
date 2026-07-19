@@ -27,11 +27,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.google.android.material.chip.Chip
-import com.google.android.material.datepicker.CalendarConstraints
-import com.google.android.material.datepicker.DateValidatorPointForward
-import com.google.android.material.datepicker.MaterialDatePicker
-import com.google.android.material.timepicker.MaterialTimePicker
-import com.google.android.material.timepicker.TimeFormat
 import com.hassan.tasknest.R
 import com.hassan.tasknest.data.local.entity.Category
 import com.hassan.tasknest.data.local.entity.Priority
@@ -61,6 +56,7 @@ class AddEditTaskFragment : Fragment() {
     }
 
     private var pendingVoiceInputTarget: VoiceInputTarget? = null
+    private var leadTimeConfirmed = false
 
     private val requestMicPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -207,34 +203,76 @@ class AddEditTaskFragment : Fragment() {
                 viewModel.updateReminderEnabled(false)
                 return
             }
+
+            val combinedDueMillis = dueDateMillis + dueTimeMillis
+            val remainingMillis = combinedDueMillis - System.currentTimeMillis()
+            val validOptions = reminderLeadOptions.filter { (leadMinutes, _) ->
+                leadMinutes * 60_000L < remainingMillis
+            }
+
+            if (validOptions.isEmpty()) {
+                Toast.makeText(
+                    requireContext(),
+                    "Not enough time remaining before the due date to set a reminder",
+                    Toast.LENGTH_SHORT
+                ).show()
+
+                binding.switchReminder.setOnCheckedChangeListener(null)
+                binding.switchReminder.isChecked = false
+                binding.switchReminder.setOnCheckedChangeListener { _, newIsChecked ->
+                    handleReminderToggleChange(newIsChecked)
+                }
+                viewModel.updateReminderEnabled(false)
+                return
+            }
+
+            viewModel.updateReminderEnabled(isChecked)
+            requestNotificationPermissionIfNeeded()
+            showReminderLeadTimeDialog(validOptions)
+            return
         }
 
         viewModel.updateReminderEnabled(isChecked)
-        if (isChecked) {
-            requestNotificationPermissionIfNeeded()
-            showReminderLeadTimeDialog()
-        }
     }
 
-    private fun showReminderLeadTimeDialog() {
+    private fun showReminderLeadTimeDialog(validOptions: List<Pair<Int, String>>) {
         val currentLeadMinutes = viewModel.uiState.value.reminderLeadMinutes
-        val checkedItem = reminderLeadOptions.indexOfFirst { it.first == currentLeadMinutes }
+        val checkedItem = validOptions.indexOfFirst { it.first == currentLeadMinutes }
             .takeIf { it >= 0 } ?: 0
-        var selectedLeadMinutes = currentLeadMinutes
+        var selectedLeadMinutes = validOptions.first().first
+        var checkedPosition = checkedItem
+        leadTimeConfirmed = false
 
-        AlertDialog.Builder(requireContext())
+        val dialog = AlertDialog.Builder(requireContext())
             .setTitle("Reminder Lead Time")
             .setSingleChoiceItems(
-                reminderLeadOptions.map { it.second }.toTypedArray(),
+                validOptions.map { it.second }.toTypedArray(),
                 checkedItem
             ) { _, which ->
-                selectedLeadMinutes = reminderLeadOptions[which].first
+                checkedPosition = which
+                selectedLeadMinutes = validOptions[which].first
+                leadTimeConfirmed = true
             }
             .setPositiveButton("OK") { _, _ ->
+                leadTimeConfirmed = true
+                selectedLeadMinutes = validOptions.getOrNull(checkedPosition)?.first ?: selectedLeadMinutes
                 viewModel.updateReminderLeadMinutes(selectedLeadMinutes)
             }
             .setNegativeButton("Cancel", null)
-            .show()
+            .create()
+
+        dialog.setOnDismissListener {
+            if (!leadTimeConfirmed) {
+                binding.switchReminder.setOnCheckedChangeListener(null)
+                binding.switchReminder.isChecked = false
+                binding.switchReminder.setOnCheckedChangeListener { _, newIsChecked ->
+                    handleReminderToggleChange(newIsChecked)
+                }
+                viewModel.updateReminderEnabled(false)
+            }
+        }
+
+        dialog.show()
     }
 
     private fun requestNotificationPermissionIfNeeded() {
@@ -357,6 +395,20 @@ class AddEditTaskFragment : Fragment() {
         binding.switchReminder.isChecked = uiState.isReminderEnabled
         binding.switchReminder.setOnCheckedChangeListener { _, isChecked ->
             handleReminderToggleChange(isChecked)
+        }
+
+        binding.tvReminderLeadTime.visibility = if (uiState.isReminderEnabled) View.VISIBLE else View.GONE
+        binding.tvReminderLeadTime.text = if (uiState.isReminderEnabled) {
+            when (uiState.reminderLeadMinutes) {
+                5 -> "(5 minutes before)"
+                15 -> "(15 minutes before)"
+                30 -> "(30 minutes before)"
+                60 -> "(1 hour before)"
+                1440 -> "(1 day before)"
+                else -> "(Reminder set)"
+            }
+        } else {
+            ""
         }
 
         applyChipSelection(uiState.categoryId)

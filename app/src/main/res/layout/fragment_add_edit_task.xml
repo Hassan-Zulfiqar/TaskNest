@@ -269,26 +269,37 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="32dp"
                 android:gravity="center_vertical"
+                android:layout_marginBottom="32dp"
                 android:orientation="horizontal">
 
                 <TextView
-                    android:layout_width="0dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
                     android:text="Set Reminder"
                     android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
                     android:textColor="@color/text_primary" />
+                <TextView
+                    android:id="@+id/tvReminderLeadTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp"
+                    android:visibility="gone"
+                    tools:text="15 minutes before"
+                    tools:visibility="visible" />
 
                 <com.google.android.material.materialswitch.MaterialSwitch
                     android:id="@+id/switchReminder"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     app:thumbTint="@color/switch_thumb_color"
                     app:trackTint="@color/switch_track_color" />
             </LinearLayout>
 
+            
 <!--            <com.google.android.material.button.MaterialButton-->
 <!--                android:id="@+id/btnSaveTask"-->
 <!--                android:layout_width="match_parent"-->

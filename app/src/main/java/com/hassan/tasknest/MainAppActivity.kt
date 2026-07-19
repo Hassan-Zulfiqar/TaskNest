@@ -2,6 +2,8 @@ package com.hassan.tasknest
 
 import android.os.Bundle
 import android.view.View
+import androidx.activity.OnBackPressedCallback
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.Lifecycle
@@ -40,6 +42,7 @@ class MainAppActivity : AppCompatActivity() {
 
         observeVoskModelState()
         setupBottomNavigation()
+        setupExitConfirmationBackPress()
     }
 
     private fun observeVoskModelState() {
@@ -62,6 +65,36 @@ class MainAppActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun setupExitConfirmationBackPress() {
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val navHostFragment = supportFragmentManager.findFragmentById(R.id.navHostFragment) as? NavHostFragment
+                val navController = navHostFragment?.navController
+                val currentDestinationId = navController?.currentDestination?.id
+
+                if (currentDestinationId == R.id.taskListFragment || currentDestinationId == R.id.notesListFragment) {
+                    AlertDialog.Builder(this@MainAppActivity)
+                        .setTitle("Exit App")
+                        .setMessage("Are you sure you want to exit?")
+                        .setPositiveButton("Exit") { _, _ ->
+                            finish()
+                        }
+                        .setNegativeButton("Cancel", null)
+                        .show()
+                    return
+                }
+
+                if (navController?.navigateUp() == true) {
+                    return
+                }
+
+                isEnabled = false
+                onBackPressedDispatcher.onBackPressed()
+                isEnabled = true
+            }
+        })
     }
 
     private fun setupBottomNavigation() {
