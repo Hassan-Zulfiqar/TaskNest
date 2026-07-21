@@ -157,6 +157,23 @@ class AddEditTaskFragment : Fragment() {
             handleReminderToggleChange(isChecked)
         }
 
+        binding.tvReminderLeadTime.setOnClickListener {
+            if (viewModel.uiState.value.isReminderEnabled) {
+                val dueDateMillis = viewModel.uiState.value.dueDateMillis
+                val dueTimeMillis = viewModel.uiState.value.dueTimeMillis
+                if (dueDateMillis != null && dueTimeMillis != null) {
+                    val combinedDueMillis = dueDateMillis + dueTimeMillis
+                    val remainingMillis = combinedDueMillis - System.currentTimeMillis()
+                    val validOptions = reminderLeadOptions.filter { (leadMinutes, _) ->
+                        leadMinutes * 60_000L < remainingMillis
+                    }
+                    if (validOptions.isNotEmpty()) {
+                        showLeadTimeDialog(validOptions)
+                    }
+                }
+            }
+        }
+
         binding.tilTaskTitle.setEndIconOnClickListener {
             onMicButtonClicked(VoiceInputTarget.TITLE)
         }
@@ -228,14 +245,14 @@ class AddEditTaskFragment : Fragment() {
 
             viewModel.updateReminderEnabled(isChecked)
             requestNotificationPermissionIfNeeded()
-            showReminderLeadTimeDialog(validOptions)
+            showLeadTimeDialog(validOptions)
             return
         }
 
         viewModel.updateReminderEnabled(isChecked)
     }
 
-    private fun showReminderLeadTimeDialog(validOptions: List<Pair<Int, String>>) {
+    private fun showLeadTimeDialog(validOptions: List<Pair<Int, String>>) {
         val currentLeadMinutes = viewModel.uiState.value.reminderLeadMinutes
         val checkedItem = validOptions.indexOfFirst { it.first == currentLeadMinutes }
             .takeIf { it >= 0 } ?: 0

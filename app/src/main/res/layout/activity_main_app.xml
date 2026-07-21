@@ -59,6 +59,6 @@
         app:itemIconTint="@color/bottom_nav_icon_color"
         app:itemTextColor="@color/bottom_nav_item_color"
         app:itemActiveIndicatorStyle="@style/BottomNav.ActiveIndicator"
-        app:backgroundTint="@color/white"/>
+        app:backgroundTint="@color/surface_card"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

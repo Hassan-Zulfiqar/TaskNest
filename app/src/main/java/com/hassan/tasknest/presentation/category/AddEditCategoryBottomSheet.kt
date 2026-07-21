@@ -54,12 +54,12 @@ class AddEditCategoryBottomSheet : BottomSheetDialogFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val swatches = listOf(
-            Triple(binding.swatch1, binding.checkSwatch1, "#F24242"),
-            Triple(binding.swatch2, binding.checkSwatch2, "#FFB55C"),
-            Triple(binding.swatch3, binding.checkSwatch3, "#67FFAA"),
-            Triple(binding.swatch4, binding.checkSwatch4, "#5780FF"),
-            Triple(binding.swatch5, binding.checkSwatch5, "#AC4FF8"),
-            Triple(binding.swatch6, binding.checkSwatch6, "#8BD1FF"),
+            Triple(binding.swatch1, binding.checkSwatch1, "#E25C5C"),
+            Triple(binding.swatch2, binding.checkSwatch2, "#E8912D"),
+            Triple(binding.swatch3, binding.checkSwatch3, "#42BA76"),
+            Triple(binding.swatch4, binding.checkSwatch4, "#4D88FF"),
+            Triple(binding.swatch5, binding.checkSwatch5, "#A862EA"),
+            Triple(binding.swatch6, binding.checkSwatch6, "#22B0A6"),
         )
 
         fun updateSwatchSelection(selectedHex: String) {

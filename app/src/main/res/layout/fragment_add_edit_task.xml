@@ -52,7 +52,8 @@
                 app:boxCornerRadiusBottomStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
                 app:boxCornerRadiusTopStart="12dp"
-                app:boxStrokeColor="@color/brand_primary"
+                app:boxStrokeColor="@color/text_field_stroke_color"
+                app:boxStrokeWidth="1dp"
                 app:endIconContentDescription="Voice Input for Title"
                 app:endIconDrawable="@drawable/ic_mic"
                 app:endIconMode="custom"
@@ -77,6 +78,8 @@
                 app:boxCornerRadiusBottomStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
                 app:boxCornerRadiusTopStart="12dp"
+                app:boxStrokeColor="@color/text_field_stroke_color"
+                app:boxStrokeWidth="1dp"
                 app:endIconContentDescription="Voice Input for Description"
                 app:endIconDrawable="@drawable/ic_mic"
                 app:endIconMode="custom"
@@ -110,6 +113,8 @@
                     app:boxCornerRadiusBottomStart="12dp"
                     app:boxCornerRadiusTopEnd="12dp"
                     app:boxCornerRadiusTopStart="12dp"
+                    app:boxStrokeColor="@color/text_field_stroke_color"
+                    app:boxStrokeWidth="1dp"
                     app:startIconDrawable="@drawable/ic_calendar">
 
                     <com.google.android.material.textfield.TextInputEditText
@@ -135,6 +140,8 @@
                     app:boxCornerRadiusBottomStart="12dp"
                     app:boxCornerRadiusTopEnd="12dp"
                     app:boxCornerRadiusTopStart="12dp"
+                    app:boxStrokeColor="@color/text_field_stroke_color"
+                    app:boxStrokeWidth="1dp"
                     app:startIconDrawable="@drawable/ic_clock">
 
                     <com.google.android.material.textfield.TextInputEditText
@@ -177,7 +184,7 @@
                     app:checkedIconVisible="true"
                     app:chipIcon="@drawable/shape_circle"
                     app:chipIconSize="16dp"
-                    app:chipIconTint="@color/category_teal"
+                    app:chipIconTint="@color/priority_low"
                     app:chipIconVisible="true"
                     app:chipStrokeColor="@android:color/transparent" />
 
@@ -190,7 +197,7 @@
                     app:checkedIconTint="@color/white"
                     app:chipIcon="@drawable/shape_circle"
                     app:chipIconSize="16dp"
-                    app:chipIconTint="@color/category_amber"
+                    app:chipIconTint="@color/priority_medium"
                     app:chipIconVisible="true"
                     app:chipStrokeColor="@android:color/transparent" />
 

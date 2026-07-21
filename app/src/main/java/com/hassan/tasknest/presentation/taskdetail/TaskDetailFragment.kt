@@ -107,6 +107,17 @@ class TaskDetailFragment : Fragment() {
                     val task = uiState.task ?: return@collect
 
                     binding.tvTaskTitle.text = task.title
+                    val (statusText, textColorRes, bgTintRes) = when {
+                        task.isCompleted -> Triple("Completed", R.color.status_success, R.color.category_personal_bg)
+                        task.dueDate != null && task.dueDate < System.currentTimeMillis() -> Triple("Late", R.color.status_error, R.color.priority_high_bg)
+                        else -> Triple("Pending", R.color.text_secondary, R.color.divider)
+                    }
+
+                    binding.tvTaskStatus.apply {
+                        text = statusText
+                        setTextColor(ContextCompat.getColor(requireContext(), textColorRes))
+                        backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), bgTintRes))
+                    }
                     if (task.isCompleted) {
                         binding.tvTaskTitle.paintFlags =
                             binding.tvTaskTitle.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG

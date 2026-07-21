@@ -104,7 +104,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                app:cardBackgroundColor="@android:color/white"
+                app:cardBackgroundColor="@color/surface_card"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="2dp"
                 app:strokeWidth="0dp">
@@ -129,23 +129,48 @@
                         android:layout_weight="1"
                         android:orientation="vertical">
 
-                        <TextView
-                            android:layout_width="wrap_content"
+                        <!-- Top Row: Label (Left) + Status Badge (Top Right) -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Due Date &amp; Time"
-                            android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
-                            android:textColor="@color/text_muted"
-                            android:textAllCaps="true" />
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
 
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Due Date &amp; Time"
+                                android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
+                                android:textColor="@color/text_muted"
+                                android:textAllCaps="true" />
+
+                            <TextView
+                                android:id="@+id/tvTaskStatus"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:background="@drawable/bg_badge"
+                                android:paddingHorizontal="8dp"
+                                android:paddingVertical="2dp"
+                                android:textAllCaps="true"
+                                android:textSize="12sp"
+                                android:textStyle="bold"
+                                tools:backgroundTint="#FFDAD6"
+                                tools:text="LATE"
+                                tools:textColor="#BA1A1A" />
+                        </LinearLayout>
+
+                        <!-- Bottom Row: Date & Time Value gets full width -->
                         <TextView
                             android:id="@+id/tvDateTimeValue"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
+                            android:layout_marginTop="4dp"
                             tools:text="Oct 24, 2026 at 10:00 AM"
                             android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
                             android:textColor="@color/text_primary"
                             android:textStyle="bold" />
+
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -154,7 +179,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                app:cardBackgroundColor="@android:color/white"
+                app:cardBackgroundColor="@color/surface_card"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="2dp"
                 app:strokeWidth="0dp">
@@ -187,7 +212,7 @@
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardBackgroundColor="@android:color/white"
+                app:cardBackgroundColor="@color/surface_card"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="2dp"
                 app:strokeWidth="0dp">

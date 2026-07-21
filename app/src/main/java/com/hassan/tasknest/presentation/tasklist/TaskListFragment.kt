@@ -186,7 +186,8 @@ class TaskListFragment : Fragment() {
             "Task marked complete"
         }
 
-        Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG)
+        Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG).setActionTextColor(Color.BLUE).setBackgroundTint(Color.LTGRAY)
+            .setTextColor(Color.BLACK)
             .setAction("Undo") {
                 // task.copy(isCompleted = !wasCompleted) reconstructs a task object representing the
                 // CURRENT (post-original-toggle) state, so that toggleTaskCompletion's internal flip

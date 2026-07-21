@@ -46,7 +46,19 @@ class TaskAdapter(
 
         fun bind(task: Task) {
             binding.tvTaskTitle.text = task.title
-            binding.tvDueDate.text = task.dueDate?.let { dateFormat.format(Date(it)) } ?: ""
+            binding.tvDueDate.text = task.dueDate?.let { dateFormat.format(Date(it)) } ?: "No due date"
+
+            val (statusText, textColorRes, bgTintRes) = when {
+                task.isCompleted -> Triple("Completed", R.color.status_success, R.color.category_personal_bg)
+                task.dueDate != null && task.dueDate < System.currentTimeMillis() -> Triple("Late", R.color.status_error, R.color.priority_high_bg)
+                else -> Triple("Pending", R.color.text_secondary, R.color.divider)
+            }
+
+            binding.tvTaskStatus.apply {
+                text = statusText
+                setTextColor(ContextCompat.getColor(binding.root.context, textColorRes))
+                backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(binding.root.context, bgTintRes))
+            }
 
             binding.checkbox.setOnCheckedChangeListener(null)
             binding.checkbox.isChecked = task.isCompleted
