@@ -8,6 +8,7 @@ import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.text.Editable
 import android.text.Spannable
+import android.text.Spanned
 import android.text.style.AbsoluteSizeSpan
 import android.text.style.BulletSpan
 import android.text.style.ForegroundColorSpan
@@ -19,6 +20,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.PopupMenu
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
@@ -33,6 +35,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.hassan.tasknest.R
 import com.hassan.tasknest.databinding.FragmentAddEditNoteBinding
+import com.hassan.tasknest.presentation.addeditnotes.formatting.SpannableConverter
 import com.hassan.tasknest.voice.VoskDictationController
 import com.hassan.tasknest.voice.VoskModelManager
 import com.hassan.tasknest.voice.VoskModelState
@@ -108,7 +111,7 @@ class AddEditNoteFragment : Fragment() {
             }
         })
 
-        binding.btnSaveNote.setOnClickListener { viewModel.saveNote() }
+        binding.btnSaveNote.setOnClickListener { performSave() }
         binding.btnDeleteNote.setOnClickListener { showDeleteConfirmationDialog() }
         binding.btnMicToggle.setOnClickListener { onMicToggleClicked() }
         updateMicButtonUi(false)
@@ -172,7 +175,16 @@ class AddEditNoteFragment : Fragment() {
                 viewModel.uiState.collect { uiState ->
                     if (uiState.isEditMode && !initialValuesCaptured) {
                         initialTitle = uiState.title
-                        initialContent = uiState.content
+
+                        // One-time load: deserialize the persisted JSON content back into a real
+                        // Spannable and set it directly, instead of the ongoing plain-text guarded
+                        // comparison used below (which would strip all formatting via toString()).
+                        val spannableResult = SpannableConverter.jsonToSpannable(uiState.content)
+                        binding.etNoteContent.setText(spannableResult, TextView.BufferType.SPANNABLE)
+                        // Capture the just-set Spannable's own JSON form (not the raw uiState.content
+                        // string) so hasUnsavedChanges() compares apples-to-apples at exit time.
+                        initialContent = SpannableConverter.spannableToJson(spannableResult)
+
                         initialValuesCaptured = true
                     }
 
@@ -181,9 +193,6 @@ class AddEditNoteFragment : Fragment() {
 
                     if (binding.etNoteTitle.text?.toString() != uiState.title) {
                         binding.etNoteTitle.setText(uiState.title)
-                    }
-                    if (binding.etNoteContent.text?.toString() != uiState.content) {
-                        binding.etNoteContent.setText(uiState.content)
                     }
 
                     if (uiState.isNoteSaved) {
@@ -251,9 +260,10 @@ class AddEditNoteFragment : Fragment() {
     }
 
     private fun hasUnsavedChanges(): Boolean {
+        // Compare JSON-serialized content (not plain .toString()) against initialContent, which was
+        // itself captured as JSON at load time, so formatting-only edits also count as unsaved.
         val currentTitle = binding.etNoteTitle.text?.toString() ?: ""
-        val currentContent = binding.etNoteContent.text?.toString() ?: ""
-        return currentTitle != initialTitle || currentContent != initialContent
+        return currentTitle != initialTitle || currentContentAsJson() != initialContent
     }
 
     private fun handleBackNavigation() {
@@ -266,13 +276,28 @@ class AddEditNoteFragment : Fragment() {
             .setTitle("Unsaved changes")
             .setMessage("Do you want to save your changes before leaving?")
             .setPositiveButton("Save") { _, _ ->
-                viewModel.saveNote()
+                performSave()
             }
             .setNegativeButton("Discard") { _, _ ->
                 findNavController().navigateUp()
             }
             .setNeutralButton("Cancel", null)
             .show()
+    }
+
+    /** Converts the EditText's live Spanned content to JSON and hands it to the ViewModel to persist. */
+    private fun performSave() {
+        // saveNote() reads content from the ViewModel's own uiState, which the TextWatcher keeps in
+        // sync as plain text for validation purposes; overwrite it with the JSON-serialized form
+        // right before saving so the persisted content actually carries formatting.
+        viewModel.updateContent(currentContentAsJson())
+        viewModel.saveNote()
+    }
+
+    /** Serializes etNoteContent's current Spanned text (including all formatting) to JSON. */
+    private fun currentContentAsJson(): String {
+        val spanned = binding.etNoteContent.text as? Spanned ?: return ""
+        return SpannableConverter.spannableToJson(spanned)
     }
 
     private fun prepareAndStartVoskDictation() {
