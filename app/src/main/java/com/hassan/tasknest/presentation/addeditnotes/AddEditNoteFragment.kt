@@ -53,7 +53,6 @@ class AddEditNoteFragment : Fragment() {
 
     private var dictationController: VoskDictationController? = null
     private var isRecording: Boolean = false
-    private var baseContentText: String = ""
     private var initialTitle: String = ""
     private var initialContent: String = ""
     private var initialValuesCaptured: Boolean = false
@@ -68,6 +67,11 @@ class AddEditNoteFragment : Fragment() {
     // Captured from onTextChanged so afterTextChanged can format exactly the newly-inserted range.
     private var pendingInsertStart: Int = 0
     private var pendingInsertCount: Int = 0
+
+    // Range currently occupied by the in-progress (not-yet-finalized) dictation partial text.
+    // -1 means no dictation session is active.
+    private var livePartialStart: Int = -1
+    private var livePartialEnd: Int = -1
 
     private val requestMicPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -190,6 +194,8 @@ class AddEditNoteFragment : Fragment() {
     override fun onDestroyView() {
         dictationController?.stop()
         dictationController = null
+        livePartialStart = -1
+        livePartialEnd = -1
         super.onDestroyView()
         _binding = null
     }
@@ -224,6 +230,8 @@ class AddEditNoteFragment : Fragment() {
         dictationController?.stop()
         dictationController = null
         isRecording = false
+        livePartialStart = -1
+        livePartialEnd = -1
         updateMicButtonUi(false)
     }
 
@@ -276,7 +284,9 @@ class AddEditNoteFragment : Fragment() {
                 return@launch
             }
 
-            baseContentText = binding.etNoteContent.text?.toString() ?: ""
+            val insertionPoint = binding.etNoteContent.text?.length ?: 0
+            livePartialStart = insertionPoint
+            livePartialEnd = insertionPoint
             dictationController = VoskDictationController(
                 model = model,
                 onPartialResult = { text ->
@@ -295,13 +305,32 @@ class AddEditNoteFragment : Fragment() {
         }
     }
 
+    /**
+     * A partial/final callback can arrive from Vosk's capture coroutine after it was already
+     * posted to the main thread, even once stop()/onDestroyView() have reset livePartialStart and
+     * livePartialEnd to -1 (or the note's text has otherwise shrunk since they were captured). If
+     * the current range is no longer valid, fall back to a fresh, zero-length range at the current
+     * end of the text so replace() never receives out-of-bounds indices.
+     */
+    private fun ensureValidLivePartialRange(editable: Editable) {
+        val isInvalid = livePartialStart == -1 ||
+            livePartialEnd == -1 ||
+            livePartialStart > editable.length ||
+            livePartialEnd > editable.length
+        if (isInvalid) {
+            livePartialStart = editable.length
+            livePartialEnd = editable.length
+        }
+    }
+
     private fun updateContentWithLiveText(partialText: String) {
-        val combinedText = listOf(baseContentText.trim(), partialText.trim())
-            .filter { it.isNotBlank() }
-            .joinToString(" ")
-        binding.etNoteContent.setText(combinedText)
-        binding.etNoteContent.setSelection(binding.etNoteContent.text?.length ?: 0)
-        viewModel.updateContent(combinedText)
+        val editable = binding.etNoteContent.text ?: return
+        ensureValidLivePartialRange(editable)
+        editable.replace(livePartialStart, livePartialEnd, partialText)
+        livePartialEnd = livePartialStart + partialText.length
+        applyActiveFormattingToRange(livePartialStart, livePartialEnd)
+        binding.etNoteContent.setSelection(livePartialEnd)
+        viewModel.updateContent(binding.etNoteContent.text?.toString() ?: "")
     }
 
     private fun finalizeUtterance(finalText: String) {
@@ -309,12 +338,25 @@ class AddEditNoteFragment : Fragment() {
             return
         }
 
-        baseContentText = listOf(baseContentText.trim(), finalText.trim())
-            .filter { it.isNotBlank() }
-            .joinToString(" ")
-        binding.etNoteContent.setText(baseContentText)
-        binding.etNoteContent.setSelection(binding.etNoteContent.text?.length ?: 0)
-        viewModel.updateContent(baseContentText)
+        val editable = binding.etNoteContent.text ?: return
+        ensureValidLivePartialRange(editable)
+
+        // Restore the space lost between segments when pausing/resuming dictation, unless we're
+        // at the very start of the note or the preceding character is already whitespace.
+        val precedingChar = livePartialStart.takeIf { it > 0 }?.let { editable[it - 1] }
+        val textToInsert = if (precedingChar != null && !precedingChar.isWhitespace()) {
+            " $finalText"
+        } else {
+            finalText
+        }
+
+        editable.replace(livePartialStart, livePartialEnd, textToInsert)
+        livePartialEnd = livePartialStart + textToInsert.length
+        applyActiveFormattingToRange(livePartialStart, livePartialEnd)
+        // This utterance is done: the next partial update starts fresh from here.
+        livePartialStart = livePartialEnd
+        binding.etNoteContent.setSelection(livePartialEnd)
+        viewModel.updateContent(binding.etNoteContent.text?.toString() ?: "")
     }
 
     private fun handleDictationError(message: String) {
@@ -322,6 +364,8 @@ class AddEditNoteFragment : Fragment() {
         isRecording = false
         dictationController?.stop()
         dictationController = null
+        livePartialStart = -1
+        livePartialEnd = -1
         updateMicButtonUi(false)
     }
 
@@ -403,6 +447,12 @@ class AddEditNoteFragment : Fragment() {
         if (end > editable.length) {
             return
         }
+        applyActiveFormattingToRange(start, end)
+    }
+
+    /** Applies whichever "format while typing" spans are currently active to [start, end). */
+    private fun applyActiveFormattingToRange(start: Int, end: Int) {
+        val editable = binding.etNoteContent.text ?: return
 
         if (isBoldActive) {
             editable.setSpan(StyleSpan(Typeface.BOLD), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
