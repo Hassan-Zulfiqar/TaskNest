@@ -80,6 +80,87 @@
             android:textColorHint="@color/text_secondary"
             android:textStyle="bold" />
 
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginStart="-9dp"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingVertical="4dp">
+
+                    <ImageView
+                        android:id="@+id/btnFormatBold"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:padding="8dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:src="@drawable/ic_format_bold"
+                        android:contentDescription="@string/desc_format_bold"
+                        app:tint="@color/icon_tint" />
+
+                    <ImageView
+                        android:id="@+id/btnFormatItalic"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="4dp"
+                        android:padding="8dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:src="@drawable/ic_format_italic"
+                        android:contentDescription="@string/desc_format_italic"
+                        app:tint="@color/icon_tint" />
+
+                    <ImageView
+                        android:id="@+id/btnFormatUnderline"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="4dp"
+                        android:padding="8dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:src="@drawable/ic_format_underline"
+                        android:contentDescription="@string/desc_format_underline"
+                        app:tint="@color/icon_tint" />
+
+                    <ImageView
+                        android:id="@+id/btnFormatBullet"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="4dp"
+                        android:padding="8dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:src="@drawable/ic_format_bullet"
+                        android:contentDescription="@string/desc_format_bullet"
+                        app:tint="@color/icon_tint" />
+
+                    <ImageView
+                        android:id="@+id/btnFormatSize"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="4dp"
+                        android:padding="8dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:src="@drawable/ic_format_size"
+                        android:contentDescription="@string/desc_format_size"
+                        app:tint="@color/icon_tint" />
+
+                    <View
+                        android:id="@+id/btnFormatColor"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginStart="12dp"
+                        android:layout_gravity="center_vertical"
+                        android:background="@drawable/shape_circle"
+                        android:backgroundTint="@color/priority_high"
+                        android:clickable="true"
+                        android:focusable="true" />
+
+                </LinearLayout>
+            </HorizontalScrollView>
+
             <EditText
                 android:id="@+id/etNoteContent"
                 android:layout_width="match_parent"

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="background_light">#121212</color>
+    <color name="surface_card">#1E1E1E</color>
+    <color name="text_primary">#DEFFFFFF</color>
+    <color name="text_secondary">#99FFFFFF</color>
+    <color name="text_muted">#99FFFFFF</color>
+    <color name="icon_tint">#99FFFFFF</color>
+    <color name="divider">#33FFFFFF</color>
+    <color name="priority_high">#FCA5A5</color>
+    <color name="priority_high_bg">#4C1D1D</color>
+
+    <!-- Medium Priority (Deep Amber Box + Pastel Orange Text) -->
+    <color name="priority_medium">#FED7AA</color>
+    <color name="priority_medium_bg">#451A03</color>
+
+    <!-- Low Priority (Dark Charcoal Box + Light Slate Text) -->
+    <color name="priority_low">#D1D5DB</color>
+    <color name="priority_low_bg">#262626</color>
+</resources>
