@@ -73,6 +73,9 @@ class AddEditNoteFragment : Fragment() {
     private var livePartialStart: Int = -1
     private var livePartialEnd: Int = -1
 
+    // Throttles onPartialResult UI updates, since Vosk can fire many times per second.
+    private var lastPartialUpdateTime: Long = 0L
+
     private val requestMicPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (granted) {
@@ -324,13 +327,35 @@ class AddEditNoteFragment : Fragment() {
     }
 
     private fun updateContentWithLiveText(partialText: String) {
+        // Vosk can fire onPartialResult many times per second; skipping some updates only reduces
+        // UI refresh frequency, since finalizeUtterance() always applies the complete, authoritative
+        // transcript regardless of how many partials were skipped beforehand.
+        if (System.currentTimeMillis() - lastPartialUpdateTime < 120) {
+            return
+        }
+
         val editable = binding.etNoteContent.text ?: return
         ensureValidLivePartialRange(editable)
         editable.replace(livePartialStart, livePartialEnd, partialText)
         livePartialEnd = livePartialStart + partialText.length
+        clearFormattingSpansInRange(livePartialStart, livePartialEnd)
         applyActiveFormattingToRange(livePartialStart, livePartialEnd)
         binding.etNoteContent.setSelection(livePartialEnd)
         viewModel.updateContent(binding.etNoteContent.text?.toString() ?: "")
+        lastPartialUpdateTime = System.currentTimeMillis()
+    }
+
+    /**
+     * Removes any existing Bold/Italic/Underline/Size/Color spans from [start, end) before a fresh
+     * span is applied to the same range. Without this, repeated partial-result updates on the same
+     * live range would accumulate spans indefinitely, causing increasingly expensive relayout.
+     */
+    private fun clearFormattingSpansInRange(start: Int, end: Int) {
+        val editable = binding.etNoteContent.text ?: return
+        editable.getSpans(start, end, StyleSpan::class.java).forEach { editable.removeSpan(it) }
+        editable.getSpans(start, end, UnderlineSpan::class.java).forEach { editable.removeSpan(it) }
+        editable.getSpans(start, end, AbsoluteSizeSpan::class.java).forEach { editable.removeSpan(it) }
+        editable.getSpans(start, end, ForegroundColorSpan::class.java).forEach { editable.removeSpan(it) }
     }
 
     private fun finalizeUtterance(finalText: String) {
