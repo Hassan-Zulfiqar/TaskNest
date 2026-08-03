@@ -110,7 +110,7 @@ object SpannableConverter {
                     "UNDERLINE" -> builder.setSpan(UnderlineSpan(), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
                     "SIZE" -> {
                         val value = spanObject.getInt("value")
-                        builder.setSpan(AbsoluteSizeSpan(value), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                        builder.setSpan(AbsoluteSizeSpan(value, true), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
                     }
                     "COLOR" -> {
                         val value = spanObject.getString("value")

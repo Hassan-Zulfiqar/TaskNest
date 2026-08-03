@@ -115,15 +115,13 @@ class MainAppActivity : AppCompatActivity() {
                 else -> false
             }
         }
+    }
 
-        navController.addOnDestinationChangedListener { _, destination, _ ->
-            binding.bottomNavigationView.visibility = if (
-                destination.id == R.id.taskListFragment || destination.id == R.id.notesListFragment
-            ) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
-        }
+    fun showBottomNav() {
+        binding.bottomNavigationView.visibility = View.VISIBLE
+    }
+
+    fun hideBottomNav() {
+        binding.bottomNavigationView.visibility = View.GONE
     }
 }

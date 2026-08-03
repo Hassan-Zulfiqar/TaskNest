@@ -18,6 +18,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.navigation.fragment.findNavController
+import com.hassan.tasknest.MainAppActivity
 import com.hassan.tasknest.R
 import com.hassan.tasknest.data.local.entity.Task
 import com.hassan.tasknest.databinding.FragmentTaskListBinding
@@ -172,6 +173,11 @@ class TaskListFragment : Fragment() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        (activity as? MainAppActivity)?.showBottomNav()
     }
 
     override fun onDestroyView() {

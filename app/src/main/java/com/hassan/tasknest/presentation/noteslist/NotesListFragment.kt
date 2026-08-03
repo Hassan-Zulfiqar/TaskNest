@@ -17,6 +17,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.navigation.fragment.findNavController
+import com.hassan.tasknest.MainAppActivity
 import com.hassan.tasknest.data.local.entity.Note
 import com.hassan.tasknest.R
 import com.hassan.tasknest.databinding.FragmentNotesListBinding
@@ -141,6 +142,11 @@ class NotesListFragment : Fragment() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        (activity as? MainAppActivity)?.showBottomNav()
     }
 
     override fun onDestroyView() {

@@ -4,13 +4,11 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.Typeface
-import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.text.Editable
 import android.text.Spannable
 import android.text.Spanned
 import android.text.style.AbsoluteSizeSpan
-import android.text.style.BulletSpan
 import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
 import android.text.style.UnderlineSpan
@@ -18,8 +16,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.PopupMenu
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -33,12 +29,15 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
+import com.hassan.tasknest.MainAppActivity
 import com.hassan.tasknest.R
 import com.hassan.tasknest.databinding.FragmentAddEditNoteBinding
 import com.hassan.tasknest.presentation.addeditnotes.formatting.SpannableConverter
 import com.hassan.tasknest.voice.VoskDictationController
 import com.hassan.tasknest.voice.VoskModelManager
 import com.hassan.tasknest.voice.VoskModelState
+import com.skydoves.colorpickerview.ColorPickerDialog
+import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -78,6 +77,13 @@ class AddEditNoteFragment : Fragment() {
 
     // Throttles onPartialResult UI updates, since Vosk can fire many times per second.
     private var lastPartialUpdateTime: Long = 0L
+
+    // Which per-line list style (if any) continues onto a new line when the user presses Enter.
+    // One of "BULLET", "DASH", "NUMBERED", "LETTERED", or null when no list is active.
+    private var activeListStyle: String? = null
+
+    private val numberedPrefixRegex = Regex("^\\d+\\. ")
+    private val letteredPrefixRegex = Regex("^[a-z]\\. ")
 
     private val requestMicPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -125,8 +131,13 @@ class AddEditNoteFragment : Fragment() {
                 pendingInsertCount = count
             },
             afterTextChanged = { text ->
+                // Capture these before any nested edits (e.g. inserting a continued list prefix)
+                // can overwrite the shared pendingInsertStart/pendingInsertCount fields below.
+                val insertStart = pendingInsertStart
+                val insertCount = pendingInsertCount
                 viewModel.updateContent(text?.toString() ?: "")
-                applyActiveFormattingToInsertedRange(pendingInsertStart, pendingInsertCount)
+                applyActiveFormattingToInsertedRange(insertStart, insertCount)
+                continueListStyleAfterNewline(insertStart, insertCount)
             }
         )
 
@@ -162,7 +173,7 @@ class AddEditNoteFragment : Fragment() {
                 }
             )
         }
-        binding.btnFormatBullet.setOnClickListener { toggleBulletFormat() }
+        binding.btnFormatBullet.setOnClickListener { showBulletStylePicker() }
         binding.btnFormatSize.setOnClickListener { showSizePicker() }
         binding.btnFormatColor.setOnClickListener { showColorPicker() }
 
@@ -201,6 +212,11 @@ class AddEditNoteFragment : Fragment() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        (activity as? MainAppActivity)?.hideBottomNav()
     }
 
     override fun onDestroyView() {
@@ -342,9 +358,9 @@ class AddEditNoteFragment : Fragment() {
      */
     private fun ensureValidLivePartialRange(editable: Editable) {
         val isInvalid = livePartialStart == -1 ||
-            livePartialEnd == -1 ||
-            livePartialStart > editable.length ||
-            livePartialEnd > editable.length
+                livePartialEnd == -1 ||
+                livePartialStart > editable.length ||
+                livePartialEnd > editable.length
         if (isInvalid) {
             livePartialStart = editable.length
             livePartialEnd = editable.length
@@ -446,8 +462,8 @@ class AddEditNoteFragment : Fragment() {
         val spans = editable.getSpans(start, end, spanClass)
         return spans.any { span ->
             matcher(span as Any) &&
-                editable.getSpanStart(span) <= start &&
-                editable.getSpanEnd(span) >= end
+                    editable.getSpanStart(span) <= start &&
+                    editable.getSpanEnd(span) >= end
         }
     }
 
@@ -523,27 +539,239 @@ class AddEditNoteFragment : Fragment() {
         }
     }
 
-    private fun toggleBulletFormat() {
+    /** Lets the user pick which per-line list marker style to apply to the affected lines. */
+    private fun showBulletStylePicker() {
+        val styles = arrayOf("Bullet (•)", "Dash (–)", "Numbered (1. 2. 3.)", "Lettered (a. b. c.)")
+        AlertDialog.Builder(requireContext())
+            .setTitle("List style")
+            .setItems(styles) { _, which ->
+                when (which) {
+                    0 -> applyBulletPrefixStyle()
+                    1 -> applyDashPrefixStyle()
+                    2 -> applyLinePrefixStyle(lettered = false)
+                    3 -> applyLinePrefixStyle(lettered = true)
+                }
+            }
+            .show()
+    }
+
+    /** Removes a literal "– " prefix from the start of [lineStart, lineEnd) if present; returns the length delta. */
+    private fun stripDashPrefixIfPresent(editable: Editable, lineStart: Int, lineEnd: Int): Int {
+        val hasDashPrefix = lineEnd - lineStart >= 2 &&
+                editable.subSequence(lineStart, lineStart + 2).toString() == "– "
+        if (!hasDashPrefix) {
+            return 0
+        }
+        editable.replace(lineStart, lineStart + 2, "")
+        return -2
+    }
+
+    /** Removes a literal "• " prefix from the start of [lineStart, lineEnd) if present; returns the length delta. */
+    private fun stripBulletPrefixIfPresent(editable: Editable, lineStart: Int, lineEnd: Int): Int {
+        val hasBulletPrefix = lineEnd - lineStart >= 2 &&
+                editable.subSequence(lineStart, lineStart + 2).toString() == "• "
+        if (!hasBulletPrefix) {
+            return 0
+        }
+        editable.replace(lineStart, lineStart + 2, "")
+        return -2
+    }
+
+    /**
+     * Bullet is implemented as a literal "• " text prefix per line, mirroring Dash's "– " exactly
+     * (BulletSpan was removed: as a paragraph-level span it required an unreliable zero-length-span-
+     * growth trick to work with a cursor-only line, and duplicated on Enter). Uses the same
+     * no-selection-defaults-to-current-line boundary logic as Dash/Numbered/Lettered.
+     */
+    private fun applyBulletPrefixStyle() {
         val editable = binding.etNoteContent.text ?: return
         val selectionStart = minOf(binding.etNoteContent.selectionStart, binding.etNoteContent.selectionEnd)
         val selectionEnd = maxOf(binding.etNoteContent.selectionStart, binding.etNoteContent.selectionEnd)
 
         val rangeStart = findLineStart(editable, selectionStart)
-        val rangeEnd = findLineEnd(editable, selectionEnd)
+        var rangeEnd = findLineEnd(editable, selectionEnd)
 
         var lineStart = rangeStart
+        var turnedOnForLastLine = false
         while (lineStart <= rangeEnd) {
-            val lineEnd = findLineEnd(editable, lineStart)
+            var lineEnd = findLineEnd(editable, lineStart)
+            // Switching from Dash: strip the literal dash prefix before inserting the bullet prefix.
+            val dashDelta = stripDashPrefixIfPresent(editable, lineStart, lineEnd)
+            lineEnd += dashDelta
+            rangeEnd += dashDelta
 
-            if (hasSpanFullyApplied(BulletSpan::class.java, lineStart, lineEnd)) {
-                editable.getSpans(lineStart, lineEnd, BulletSpan::class.java).forEach { span ->
-                    editable.removeSpan(span)
-                }
+            val hasBulletPrefix = lineEnd - lineStart >= 2 &&
+                    editable.subSequence(lineStart, lineStart + 2).toString() == "• "
+
+            if (hasBulletPrefix) {
+                editable.replace(lineStart, lineStart + 2, "")
+                lineEnd -= 2
+                rangeEnd -= 2
+                turnedOnForLastLine = false
             } else {
-                editable.setSpan(BulletSpan(), lineStart, lineEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                editable.replace(lineStart, lineStart, "• ")
+                lineEnd += 2
+                rangeEnd += 2
+                turnedOnForLastLine = true
             }
 
             lineStart = lineEnd + 1
+        }
+
+        activeListStyle = if (turnedOnForLastLine) "BULLET" else null
+    }
+
+    /** Dash is a literal "– " text prefix per line. Toggles off if that exact line already has the prefix. */
+    private fun applyDashPrefixStyle() {
+        val editable = binding.etNoteContent.text ?: return
+        val selectionStart = minOf(binding.etNoteContent.selectionStart, binding.etNoteContent.selectionEnd)
+        val selectionEnd = maxOf(binding.etNoteContent.selectionStart, binding.etNoteContent.selectionEnd)
+
+        val rangeStart = findLineStart(editable, selectionStart)
+        var rangeEnd = findLineEnd(editable, selectionEnd)
+
+        var lineStart = rangeStart
+        var turnedOnForLastLine = false
+        while (lineStart <= rangeEnd) {
+            var lineEnd = findLineEnd(editable, lineStart)
+            // Switching from Bullet: strip the literal bullet prefix before inserting the dash prefix.
+            val bulletDelta = stripBulletPrefixIfPresent(editable, lineStart, lineEnd)
+            lineEnd += bulletDelta
+            rangeEnd += bulletDelta
+
+            val hasDashPrefix = lineEnd - lineStart >= 2 &&
+                    editable.subSequence(lineStart, lineStart + 2).toString() == "– "
+
+            if (hasDashPrefix) {
+                editable.replace(lineStart, lineStart + 2, "")
+                lineEnd -= 2
+                rangeEnd -= 2
+                turnedOnForLastLine = false
+            } else {
+                editable.replace(lineStart, lineStart, "– ")
+                lineEnd += 2
+                rangeEnd += 2
+                turnedOnForLastLine = true
+            }
+
+            lineStart = lineEnd + 1
+        }
+
+        activeListStyle = if (turnedOnForLastLine) "DASH" else null
+    }
+
+    /**
+     * Numbered/Lettered markers are plain text inserted once per affected line — they do not
+     * auto-renumber if lines are later added/removed/reordered. Each line is checked independently
+     * against this style's prefix pattern and toggled off if already present, matching Bullet/Dash.
+     */
+    private fun applyLinePrefixStyle(lettered: Boolean) {
+        val editable = binding.etNoteContent.text ?: return
+        val selectionStart = minOf(binding.etNoteContent.selectionStart, binding.etNoteContent.selectionEnd)
+        val selectionEnd = maxOf(binding.etNoteContent.selectionStart, binding.etNoteContent.selectionEnd)
+
+        val rangeStart = findLineStart(editable, selectionStart)
+        var rangeEnd = findLineEnd(editable, selectionEnd)
+        val prefixRegex = if (lettered) letteredPrefixRegex else numberedPrefixRegex
+
+        var lineStart = rangeStart
+        var lineNumber = 1
+        var turnedOnForLastLine = false
+        while (lineStart <= rangeEnd) {
+            var lineEnd = findLineEnd(editable, lineStart)
+
+            // Switching from Bullet/Dash: clear their literal markers before inserting the new prefix.
+            val bulletDelta = stripBulletPrefixIfPresent(editable, lineStart, lineEnd)
+            lineEnd += bulletDelta
+            rangeEnd += bulletDelta
+            val dashDelta = stripDashPrefixIfPresent(editable, lineStart, lineEnd)
+            lineEnd += dashDelta
+            rangeEnd += dashDelta
+
+            val lineText = editable.subSequence(lineStart, lineEnd).toString()
+            val existingMatch = prefixRegex.find(lineText)
+
+            if (existingMatch != null) {
+                // This exact line already has a matching prefix: toggle it off instead of doubling up.
+                val prefixLength = existingMatch.value.length
+                editable.replace(lineStart, lineStart + prefixLength, "")
+                lineEnd -= prefixLength
+                rangeEnd -= prefixLength
+                turnedOnForLastLine = false
+            } else {
+                // Lettered caps at 26 lines ("a." through "z."); beyond that, fall back to numbers.
+                val prefix = if (lettered && lineNumber <= 26) {
+                    "${'a' + (lineNumber - 1)}. "
+                } else {
+                    "$lineNumber. "
+                }
+                editable.replace(lineStart, lineStart, prefix)
+                lineEnd += prefix.length
+                rangeEnd += prefix.length
+                turnedOnForLastLine = true
+            }
+
+            lineStart = lineEnd + 1
+            lineNumber++
+        }
+
+        activeListStyle = if (turnedOnForLastLine) (if (lettered) "LETTERED" else "NUMBERED") else null
+    }
+
+    /**
+     * When a lone "\n" is inserted (the user pressed Enter) and a list style is active, continue
+     * that style onto the new line. If the line just completed contains ONLY the active style's
+     * empty marker (no other text), remove that marker instead and exit list mode — the standard
+     * "double-enter to exit a list" behavior.
+     */
+    private fun continueListStyleAfterNewline(insertStart: Int, insertCount: Int) {
+        val style = activeListStyle ?: return
+        if (insertCount != 1) return
+        val editable = binding.etNoteContent.text ?: return
+        if (insertStart !in 0 until editable.length || editable[insertStart] != '\n') return
+
+        val previousLineStart = findLineStart(editable, insertStart)
+        val previousLineEnd = insertStart
+        val previousLineText = editable.subSequence(previousLineStart, previousLineEnd).toString()
+        val newLineStart = insertStart + 1
+
+        when (style) {
+            "BULLET" -> {
+                if (previousLineText == "• ") {
+                    editable.replace(previousLineStart, previousLineEnd, "")
+                    activeListStyle = null
+                    return
+                }
+                editable.replace(newLineStart, newLineStart, "• ")
+            }
+            "DASH" -> {
+                if (previousLineText == "– ") {
+                    editable.replace(previousLineStart, previousLineEnd, "")
+                    activeListStyle = null
+                    return
+                }
+                editable.replace(newLineStart, newLineStart, "– ")
+            }
+            "NUMBERED" -> {
+                if (numberedPrefixRegex.matches(previousLineText)) {
+                    editable.replace(previousLineStart, previousLineEnd, "")
+                    activeListStyle = null
+                    return
+                }
+                val previousNumber = numberedPrefixRegex.find(previousLineText)
+                    ?.value?.trim()?.removeSuffix(".")?.toIntOrNull()
+                editable.replace(newLineStart, newLineStart, "${(previousNumber ?: 0) + 1}. ")
+            }
+            "LETTERED" -> {
+                if (letteredPrefixRegex.matches(previousLineText)) {
+                    editable.replace(previousLineStart, previousLineEnd, "")
+                    activeListStyle = null
+                    return
+                }
+                val previousLetter = letteredPrefixRegex.find(previousLineText)?.value?.getOrNull(0)
+                val nextLetter = if (previousLetter != null && previousLetter < 'z') previousLetter + 1 else 'a'
+                editable.replace(newLineStart, newLineStart, "$nextLetter. ")
+            }
         }
     }
 
@@ -565,35 +793,41 @@ class AddEditNoteFragment : Fragment() {
 
     private fun showSizePicker() {
         // With a selection: apply directly to it, unchanged from before. With no selection: this
-        // picks the "format while typing" size instead, with an extra "None" option to clear it.
+        // picks the "format while typing" size instead, with a "None" option to clear it.
         val range = getEffectiveCharRange()
+        val editable = binding.etNoteContent.text
 
-        val sizeOptions = listOf(
-            "Small" to 14,
-            "Normal" to 18,
-            "Large" to 24,
-            "Extra Large" to 32
-        )
-        val noneItemId = sizeOptions.size
+        val sizeValues = listOf(10, 12, 14, 16, 18, 20, 24, 28, 32, 36)
+        val sizeLabels = sizeValues.map { "${it}pt" }.toTypedArray()
 
-        val popupMenu = PopupMenu(requireContext(), binding.btnFormatSize)
-        sizeOptions.forEachIndexed { index, (label, _) ->
-            popupMenu.menu.add(0, index, index, label)
-        }
-        if (range == null) {
-            popupMenu.menu.add(0, noneItemId, noneItemId, "None")
-        }
-        popupMenu.setOnMenuItemClickListener { menuItem ->
-            if (range != null) {
-                val (start, end) = range
-                val sizeSp = sizeOptions[menuItem.itemId].second
-                applySizeSpan(start, end, sizeSp)
-            } else {
-                activeSizeSp = if (menuItem.itemId == noneItemId) null else sizeOptions[menuItem.itemId].second
+        // Pre-select whichever size is already applied at the cursor/selection start, if any.
+        val checkPosition = range?.first ?: binding.etNoteContent.selectionStart
+        val currentSize = if (editable != null && checkPosition in 0..editable.length) {
+            editable.getSpans(checkPosition, checkPosition, AbsoluteSizeSpan::class.java).firstOrNull()?.size
+        } else {
+            null
+        } ?: activeSizeSp
+        val preselectedIndex = sizeValues.indexOf(currentSize)
+
+        val dialogBuilder = AlertDialog.Builder(requireContext())
+            .setTitle("Font size")
+            .setSingleChoiceItems(sizeLabels, preselectedIndex) { dialog, which ->
+                val selectedSize = sizeValues[which]
+                if (range != null) {
+                    val (start, end) = range
+                    applySizeSpan(start, end, selectedSize)
+                } else {
+                    activeSizeSp = selectedSize
+                }
+                dialog.dismiss()
             }
-            true
+            .setNegativeButton("Cancel", null)
+
+        if (range == null) {
+            dialogBuilder.setNeutralButton("None") { _, _ -> activeSizeSp = null }
         }
-        popupMenu.show()
+
+        dialogBuilder.show()
     }
 
     private fun applySizeSpan(start: Int, end: Int, sizeSp: Int) {
@@ -606,56 +840,53 @@ class AddEditNoteFragment : Fragment() {
 
     private fun showColorPicker() {
         // With a selection: apply directly to it, unchanged from before. With no selection: this
-        // picks the "format while typing" color instead, with an extra "None" option to clear it.
+        // picks the "format while typing" color instead.
         val range = getEffectiveCharRange()
 
-        val colorOptions = listOf(
-            "#E25C5C", "#E8912D", "#42BA76", "#4D88FF", "#A862EA", "#22B0A6"
-        )
-
-        val dialogBuilder = AlertDialog.Builder(requireContext())
+        // "Default" stays a quick, separate option alongside the full-spectrum picker rather than
+        // being just another color inside it, since it means "clear the color span" not "apply one".
+        AlertDialog.Builder(requireContext())
             .setTitle("Text color")
-            .setNegativeButton("Cancel", null)
-
-        if (range == null) {
-            dialogBuilder.setNeutralButton("None") { _, _ -> activeColorHex = null }
-        }
-
-        val dialog = dialogBuilder.create()
-
-        val swatchRow = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.HORIZONTAL
-            val padding = (16 * resources.displayMetrics.density).toInt()
-            setPadding(padding, padding, padding, padding)
-        }
-
-        val swatchSize = (32 * resources.displayMetrics.density).toInt()
-        val swatchMargin = (8 * resources.displayMetrics.density).toInt()
-
-        colorOptions.forEach { hex ->
-            val swatch = View(requireContext())
-            val params = LinearLayout.LayoutParams(swatchSize, swatchSize)
-            params.marginStart = swatchMargin
-            params.marginEnd = swatchMargin
-            swatch.layoutParams = params
-            val drawable = GradientDrawable()
-            drawable.shape = GradientDrawable.OVAL
-            drawable.setColor(Color.parseColor(hex))
-            swatch.background = drawable
-            swatch.setOnClickListener {
-                if (range != null) {
-                    val (start, end) = range
-                    applyColorSpan(start, end, hex)
+            .setItems(arrayOf("Default", "Choose Color...")) { _, which ->
+                if (which == 0) {
+                    applyChosenColor(range, null)
                 } else {
-                    activeColorHex = hex
+                    showFullSpectrumColorPicker(range)
                 }
-                dialog.dismiss()
             }
-            swatchRow.addView(swatch)
-        }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
 
-        dialog.setView(swatchRow)
-        dialog.show()
+    private fun showFullSpectrumColorPicker(range: Pair<Int, Int>?) {
+        ColorPickerDialog.Builder(requireContext())
+            .setTitle("Choose Color")
+            .attachAlphaSlideBar(false)
+            .attachBrightnessSlideBar(true)
+            .setPositiveButton(
+                "Select",
+                ColorEnvelopeListener { colorEnvelope, _ ->
+                    val hexCode = colorEnvelope.hexCode
+                    val hex = if (hexCode.startsWith("#")) hexCode else "#$hexCode"
+                    applyChosenColor(range, hex)
+                }
+            )
+            .setNegativeButton("Cancel") { dialogInterface, _ -> dialogInterface.dismiss() }
+            .show()
+    }
+
+    // hex == null means "Default": remove any color instead of applying a new one.
+    private fun applyChosenColor(range: Pair<Int, Int>?, hex: String?) {
+        if (range != null) {
+            val (start, end) = range
+            if (hex != null) {
+                applyColorSpan(start, end, hex)
+            } else {
+                removeColorSpan(start, end)
+            }
+        } else {
+            activeColorHex = hex
+        }
     }
 
     private fun applyColorSpan(start: Int, end: Int, colorHex: String) {
@@ -664,5 +895,13 @@ class AddEditNoteFragment : Fragment() {
             editable.removeSpan(span)
         }
         editable.setSpan(ForegroundColorSpan(Color.parseColor(colorHex)), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+    }
+
+    /** "Default": genuinely removes any ForegroundColorSpan from the range, reverting to the natural text color. */
+    private fun removeColorSpan(start: Int, end: Int) {
+        val editable = binding.etNoteContent.text ?: return
+        editable.getSpans(start, end, ForegroundColorSpan::class.java).forEach { span ->
+            editable.removeSpan(span)
+        }
     }
 }

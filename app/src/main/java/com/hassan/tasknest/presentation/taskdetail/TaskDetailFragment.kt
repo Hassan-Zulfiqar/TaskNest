@@ -15,6 +15,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
+import com.hassan.tasknest.MainAppActivity
 import com.hassan.tasknest.R
 import com.hassan.tasknest.data.local.entity.Priority
 import com.hassan.tasknest.data.repository.CategoryRepository
@@ -182,6 +183,11 @@ class TaskDetailFragment : Fragment() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        (activity as? MainAppActivity)?.hideBottomNav()
     }
 
     override fun onDestroyView() {

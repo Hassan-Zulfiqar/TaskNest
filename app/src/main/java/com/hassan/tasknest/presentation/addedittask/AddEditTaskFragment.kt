@@ -27,6 +27,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.google.android.material.chip.Chip
+import com.hassan.tasknest.MainAppActivity
 import com.hassan.tasknest.R
 import com.hassan.tasknest.data.local.entity.Category
 import com.hassan.tasknest.data.local.entity.Priority
@@ -536,6 +537,11 @@ class AddEditTaskFragment : Fragment() {
         }
 
         timePickerDialog.show()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        (activity as? MainAppActivity)?.hideBottomNav()
     }
 
     override fun onDestroyView() {

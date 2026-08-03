@@ -28,7 +28,8 @@
         </activity>
         <activity
             android:name=".MainAppActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
     </application>
 
 </manifest>

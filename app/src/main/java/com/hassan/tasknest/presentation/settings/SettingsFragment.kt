@@ -14,6 +14,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import com.hassan.tasknest.MainAppActivity
 import com.hassan.tasknest.R
 import com.hassan.tasknest.databinding.FragmentSettingsBinding
 import com.hassan.tasknest.presentation.tasklist.TaskFilter
@@ -161,6 +162,7 @@ class SettingsFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
+        (activity as? MainAppActivity)?.hideBottomNav()
         viewModel.refreshPermissionStatuses()
     }
 

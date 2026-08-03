@@ -11,6 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.navArgs
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.hassan.tasknest.MainAppActivity
 import com.hassan.tasknest.data.repository.CategoryRepository
 import com.hassan.tasknest.databinding.AddEditCategoryBottomSheetBinding
 import kotlinx.coroutines.flow.first
@@ -115,6 +116,11 @@ class AddEditCategoryBottomSheet : BottomSheetDialogFragment() {
                 viewModel.updateCategory(args.categoryId, name, selectedColorHex)
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        (activity as? MainAppActivity)?.hideBottomNav()
     }
 
     override fun onDestroyView() {

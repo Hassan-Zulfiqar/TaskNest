@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.hassan.tasknest.data.local.entity.Note
 import com.hassan.tasknest.databinding.ItemNoteCardBinding
+import com.hassan.tasknest.presentation.addeditnotes.formatting.SpannableConverter
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -40,7 +41,9 @@ class NoteAdapter(
 
 		fun bind(note: Note) {
 			binding.tvNoteTitle.text = note.title.ifBlank { "Untitled Note" }
-			binding.tvNotePreview.text = note.content
+			// note.content may be JSON (formatted note) or plain text (legacy note); strip formatting
+			// for this plain-text list preview via jsonToSpannable's existing fallback + toString().
+			binding.tvNotePreview.text = SpannableConverter.jsonToSpannable(note.content).toString()
 			binding.tvNoteTimestamp.text = formatNoteTimestamp(note.updatedAt)
 
 			binding.root.setOnClickListener { onNoteClick(note) }
