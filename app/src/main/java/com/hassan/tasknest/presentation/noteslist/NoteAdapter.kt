@@ -45,7 +45,9 @@ class NoteAdapter(
 			binding.tvNoteTitle.text = note.title.ifBlank { "Untitled Note" }
 			// note.content may be JSON (formatted note) or plain text (legacy note); strip formatting
 			// for this plain-text list preview via jsonToSpannable's existing fallback + toString().
-			binding.tvNotePreview.text = SpannableConverter.jsonToSpannable(note.content, itemView.context).toString()
+			// targetWidthPx is irrelevant here: only .toString() is used, discarding all span/sizing
+			// info, so any placeholder value satisfies the signature without affecting this preview.
+			binding.tvNotePreview.text = SpannableConverter.jsonToSpannable(note.content, itemView.context, 1).toString()
 			binding.tvNoteTimestamp.text = formatNoteTimestamp(note.updatedAt)
 
 			val imagePaths = SpannableConverter.extractImagePaths(note.content)

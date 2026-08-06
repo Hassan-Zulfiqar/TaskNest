@@ -1,6 +1,7 @@
 package com.hassan.tasknest.presentation.addeditnotes.formatting
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.Typeface
@@ -108,8 +109,8 @@ object SpannableConverter {
         return root.toString()
     }
 
-    /** Parses a JSON string produced by [spannableToJson] back into a Spannable, falling back to plain text on failure. */
-    fun jsonToSpannable(json: String, context: Context): Spannable {
+    /** Parses a JSON string produced by [spannableToJson] back into a Spannable, scaling any images to fit [targetWidthPx], falling back to plain text on failure. */
+    fun jsonToSpannable(json: String, context: Context, targetWidthPx: Int): Spannable {
         return try {
             val root = JSONObject(json)
             val text = root.getString("text")
@@ -144,8 +145,17 @@ object SpannableConverter {
                                 null
                             }
                             if (bitmap != null) {
-                                val drawable = BitmapDrawable(context.resources, bitmap)
-                                drawable.setBounds(0, 0, drawable.intrinsicWidth, drawable.intrinsicHeight)
+                                val drawable = if (targetWidthPx > 0) {
+                                    val scaledHeight = (bitmap.height.toFloat() / bitmap.width.toFloat() * targetWidthPx).toInt()
+                                    val scaledBitmap = Bitmap.createScaledBitmap(bitmap, targetWidthPx, scaledHeight, true)
+                                    BitmapDrawable(context.resources, scaledBitmap).apply {
+                                        setBounds(0, 0, targetWidthPx, scaledHeight)
+                                    }
+                                } else {
+                                    BitmapDrawable(context.resources, bitmap).apply {
+                                        setBounds(0, 0, intrinsicWidth, intrinsicHeight)
+                                    }
+                                }
                                 builder.setSpan(
                                     ImageSpan(drawable, filePath),
                                     start,

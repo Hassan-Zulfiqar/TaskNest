@@ -2,7 +2,6 @@
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.util.Log
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
@@ -218,7 +217,11 @@ class AddEditNoteFragment : Fragment() {
                         // One-time load: deserialize the persisted JSON content back into a real
                         // Spannable and set it directly, instead of the ongoing plain-text guarded
                         // comparison used below (which would strip all formatting via toString()).
-                        val spannableResult = SpannableConverter.jsonToSpannable(uiState.content, requireContext())
+                        val spannableResult = SpannableConverter.jsonToSpannable(
+                            uiState.content,
+                            requireContext(),
+                            calculateImageTargetWidth()
+                        )
                         binding.etNoteContent.setText(spannableResult, TextView.BufferType.SPANNABLE)
                         // Capture the just-set Spannable's own JSON form (not the raw uiState.content
                         // string) so hasUnsavedChanges() compares apples-to-apples at exit time.
@@ -335,13 +338,9 @@ class AddEditNoteFragment : Fragment() {
             .setNegativeButton("Discard") { _, _ ->
                 // Any image added during this session but never saved has no reference left once
                 // discarded: it was never part of originalImagePaths, so it's now orphaned on disk.
-                Log.d("DiscardCleanup", "originalImagePaths = $originalImagePaths")
                 val currentImagePaths = SpannableConverter.extractImagePaths(currentContentAsJson())
-                Log.d("DiscardCleanup", "currentImagePaths = $currentImagePaths")
                 val discardedPaths = currentImagePaths - originalImagePaths.toSet()
-                Log.d("DiscardCleanup", "discardedPaths = $discardedPaths")
                 discardedPaths.forEach { path ->
-                    Log.d("DiscardCleanup", "Attempting to delete: $path")
                     noteImageStorage.deleteImage(path)
                 }
 
@@ -964,6 +963,26 @@ class AddEditNoteFragment : Fragment() {
     }
 
     /**
+     * The width, in pixels, any inline note image should be scaled to fit - shared by both
+     * insertImageAtCursor() (new images) and the note-load path (existing images), so the two can
+     * never diverge. Prefers etNoteContent's own measured width; falls back to the screen width
+     * minus the 16dp horizontal padding applied on both sides by the content LinearLayout that
+     * wraps it in fragment_add_edit_note.xml (matching etNoteTitle's own 16dp padding) when the
+     * view hasn't been measured yet.
+     */
+    private fun calculateImageTargetWidth(): Int {
+        val editTextWidth = binding.etNoteContent.width
+        return (
+            if (editTextWidth > 0) {
+                editTextWidth - binding.etNoteContent.paddingLeft - binding.etNoteContent.paddingRight
+            } else {
+                val contentHorizontalPaddingPx = (16 * resources.displayMetrics.density).toInt()
+                resources.displayMetrics.widthPixels - (2 * contentHorizontalPaddingPx)
+            }
+        ).coerceAtLeast(1)
+    }
+
+    /**
      * Inserts a saved image inline at the cursor as an ImageSpan anchored to a single \uFFFC
      * placeholder character, forcing it onto its own line (leading newline unless already at the
      * start of a line, trailing newline always) so following text starts fresh below it.
@@ -975,18 +994,7 @@ class AddEditNoteFragment : Fragment() {
             return
         }
 
-        val editTextWidth = binding.etNoteContent.width
-        val targetWidth = (
-            if (editTextWidth > 0) {
-                editTextWidth - binding.etNoteContent.paddingLeft - binding.etNoteContent.paddingRight
-            } else {
-                // etNoteContent isn't measured yet: fall back to the screen width minus the 16dp
-                // horizontal padding applied on both sides by the content LinearLayout that wraps
-                // it in fragment_add_edit_note.xml (matching etNoteTitle's own 16dp padding).
-                val contentHorizontalPaddingPx = (16 * resources.displayMetrics.density).toInt()
-                resources.displayMetrics.widthPixels - (2 * contentHorizontalPaddingPx)
-            }
-        ).coerceAtLeast(1)
+        val targetWidth = calculateImageTargetWidth()
         val maxHeight = (400 * resources.displayMetrics.density).toInt()
         val aspectRatio = bitmap.height.toFloat() / bitmap.width.toFloat()
         val targetHeight = (targetWidth * aspectRatio).toInt().coerceIn(1, maxHeight)
