@@ -2,10 +2,15 @@ package com.hassan.tasknest.data.repository
 
 import com.hassan.tasknest.data.local.dao.NoteDao
 import com.hassan.tasknest.data.local.entity.Note
+import com.hassan.tasknest.presentation.addeditnotes.formatting.NoteImageStorage
+import com.hassan.tasknest.presentation.addeditnotes.formatting.SpannableConverter
 import kotlinx.coroutines.flow.Flow
 
 /** Wraps NoteDao for note data operations. */
-class NoteRepository(private val noteDao: NoteDao) {
+class NoteRepository(
+	private val noteDao: NoteDao,
+	private val noteImageStorage: NoteImageStorage
+) {
 
 	fun getAllNotes(): Flow<List<Note>> = noteDao.getAllNotes()
 
@@ -35,6 +40,10 @@ class NoteRepository(private val noteDao: NoteDao) {
 		)
 	}
 
-	suspend fun deleteNote(note: Note) = noteDao.deleteNote(note)
+	suspend fun deleteNote(note: Note) {
+		val imagePaths = SpannableConverter.extractImagePaths(note.content)
+		imagePaths.forEach { path -> noteImageStorage.deleteImage(path) }
+		noteDao.deleteNote(note)
+	}
 }
 

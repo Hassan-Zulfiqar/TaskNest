@@ -26,6 +26,7 @@
     <string name="desc_format_underline">Underline</string>
     <string name="desc_format_bullet">Bullet list</string>
     <string name="desc_format_size">Font size</string>
+    <string name="desc_insert_image">Insert image</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
 

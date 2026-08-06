@@ -11,4 +11,5 @@ sealed class  NoteSpan {
     data class Size(override val start: Int, override val end: Int, val sizeSp: Int) : NoteSpan()
     data class TextColor(override val start: Int, override val end: Int, val colorHex: String) : NoteSpan()
     data class Bullet(override val start: Int, override val end: Int) : NoteSpan()
+    data class Image(override val start: Int, override val end: Int, val filePath: String) : NoteSpan()
 }

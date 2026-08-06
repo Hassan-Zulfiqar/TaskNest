@@ -25,10 +25,8 @@
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/nestedScrollView"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        android:clipToPadding="false"
-        android:paddingBottom="24dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -38,10 +36,10 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
-            android:paddingHorizontal="24dp"
             android:paddingTop="24dp">
 
             <com.google.android.material.textfield.TextInputLayout
+                android:paddingHorizontal="20dp"
                 android:id="@+id/tilTaskTitle"
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
@@ -83,6 +81,7 @@
                 app:endIconContentDescription="Voice Input for Description"
                 app:endIconDrawable="@drawable/ic_mic"
                 app:endIconMode="custom"
+                android:paddingHorizontal="20dp"
                 app:endIconTint="@color/icon_tint">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -99,6 +98,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="24dp"
+                android:paddingHorizontal="20dp"
                 android:baselineAligned="false"
                 android:orientation="horizontal">
 
@@ -161,6 +161,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
+                android:paddingHorizontal="20dp"
                 android:text="PRIORITY"
                 android:textAllCaps="true"
                 android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
@@ -170,6 +171,7 @@
                 android:id="@+id/chipGroupPriority"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:paddingHorizontal="20dp"
                 android:layout_marginBottom="24dp"
                 app:singleLine="true"
                 app:singleSelection="true">
@@ -197,7 +199,7 @@
                     app:checkedIconTint="@color/white"
                     app:chipIcon="@drawable/shape_circle"
                     app:chipIconSize="16dp"
-                    app:chipIconTint="@color/priority_medium"
+                    app:chipIconTint="#FF8335"
                     app:chipIconVisible="true"
                     app:chipStrokeColor="@android:color/transparent" />
 
@@ -220,6 +222,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
                 android:text="CATEGORY"
+                android:paddingHorizontal="20dp"
                 android:textAllCaps="true"
                 android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
                 android:textColor="@color/text_secondary" />
@@ -227,6 +230,7 @@
             <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:paddingHorizontal="20dp"
                 android:layout_marginBottom="24dp"
                 android:scrollbars="none">
 
@@ -278,6 +282,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
                 android:layout_marginBottom="32dp"
+                android:paddingHorizontal="20dp"
                 android:orientation="horizontal">
 
                 <TextView
@@ -306,7 +311,7 @@
                     app:trackTint="@color/switch_track_color" />
             </LinearLayout>
 
-            
+
 <!--            <com.google.android.material.button.MaterialButton-->
 <!--                android:id="@+id/btnSaveTask"-->
 <!--                android:layout_width="match_parent"-->
@@ -316,29 +321,27 @@
 <!--                app:backgroundTint="@color/brand_primary"-->
 <!--                app:cornerRadius="12dp" />-->
 
+            <LinearLayout
+                android:id="@+id/footerLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/background_light"
+                android:paddingHorizontal="20dp"
+                android:paddingVertical="16dp"
+                android:elevation="8dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSaveTask"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:text="Save Task"
+                    android:textColor="@android:color/white"
+                    app:backgroundTint="@color/brand_primary"
+                    app:cornerRadius="12dp" />
+            </LinearLayout>
+
         </LinearLayout>
+
     </androidx.core.widget.NestedScrollView>
-
-    <LinearLayout
-        android:id="@+id/footerLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/background_light"
-        android:elevation="8dp"
-        android:paddingHorizontal="24dp"
-        android:paddingVertical="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnSaveTask"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="Save Task"
-            android:textColor="@android:color/white"
-            app:backgroundTint="@color/brand_primary"
-            app:cornerRadius="12dp" />
-    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

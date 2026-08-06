@@ -13,6 +13,7 @@ import com.hassan.tasknest.presentation.addedittask.AddEditTaskViewModel
 import com.hassan.tasknest.presentation.addeditnotes.AddEditNoteViewModel
 import com.hassan.tasknest.presentation.category.CategoryViewModel
 import com.hassan.tasknest.presentation.noteslist.NotesListViewModel
+import com.hassan.tasknest.presentation.addeditnotes.formatting.NoteImageStorage
 import com.hassan.tasknest.presentation.settings.SettingsViewModel
 import com.hassan.tasknest.presentation.taskdetail.TaskDetailViewModel
 import com.hassan.tasknest.presentation.tasklist.TaskListViewModel
@@ -29,7 +30,7 @@ val appModule = module {
     single { UserPreferencesDataStore(androidContext()) }
     single { TaskRepository(get(), androidContext()) }
     single { CategoryRepository(get()) }
-    single { NoteRepository(get()) }
+    single { NoteRepository(get(), get()) }
     single { PreferencesRepository(get()) }
     viewModel { TaskListViewModel(get<TaskRepository>(), get<PreferencesRepository>()) }
     viewModel { AddEditTaskViewModel(get<TaskRepository>(), get<CategoryRepository>()) }
@@ -39,4 +40,5 @@ val appModule = module {
     viewModel { NotesListViewModel(get()) }
     viewModel { SettingsViewModel(get(), androidContext()) }
     single { VoskModelManager(androidContext()) }
+    single { NoteImageStorage(androidContext()) }
 }

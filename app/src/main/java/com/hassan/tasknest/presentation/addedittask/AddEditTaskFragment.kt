@@ -58,7 +58,6 @@ class AddEditTaskFragment : Fragment() {
 
     private var pendingVoiceInputTarget: VoiceInputTarget? = null
     private var leadTimeConfirmed = false
-
     private val requestMicPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (granted) {

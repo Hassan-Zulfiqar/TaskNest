@@ -1,6 +1,8 @@
 package com.hassan.tasknest.presentation.noteslist
 
+import android.graphics.BitmapFactory
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.hassan.tasknest.data.local.entity.Note
@@ -43,8 +45,25 @@ class NoteAdapter(
 			binding.tvNoteTitle.text = note.title.ifBlank { "Untitled Note" }
 			// note.content may be JSON (formatted note) or plain text (legacy note); strip formatting
 			// for this plain-text list preview via jsonToSpannable's existing fallback + toString().
-			binding.tvNotePreview.text = SpannableConverter.jsonToSpannable(note.content).toString()
+			binding.tvNotePreview.text = SpannableConverter.jsonToSpannable(note.content, itemView.context).toString()
 			binding.tvNoteTimestamp.text = formatNoteTimestamp(note.updatedAt)
+
+			val imagePaths = SpannableConverter.extractImagePaths(note.content)
+			val thumbnailBitmap = if (imagePaths.isNotEmpty()) {
+				try {
+					BitmapFactory.decodeFile(imagePaths.first())
+				} catch (e: Exception) {
+					null
+				}
+			} else {
+				null
+			}
+			if (thumbnailBitmap != null) {
+				binding.ivNoteThumbnail.setImageBitmap(thumbnailBitmap)
+				binding.ivNoteThumbnail.visibility = View.VISIBLE
+			} else {
+				binding.ivNoteThumbnail.visibility = View.GONE
+			}
 
 			binding.root.setOnClickListener { onNoteClick(note) }
 			binding.root.setOnLongClickListener {

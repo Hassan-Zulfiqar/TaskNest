@@ -15,6 +15,7 @@ import org.koin.android.ext.android.inject
 
 class MainActivity : AppCompatActivity() {
 
+    // SPLASH SCREEN
     private val userPreferencesDataStore: UserPreferencesDataStore by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {

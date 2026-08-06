@@ -1,15 +1,20 @@
-package com.hassan.tasknest.presentation.addeditnotes
+﻿package com.hassan.tasknest.presentation.addeditnotes
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.util.Log
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.text.Editable
 import android.text.Spannable
 import android.text.Spanned
 import android.text.style.AbsoluteSizeSpan
 import android.text.style.ForegroundColorSpan
+import android.text.style.ImageSpan
 import android.text.style.StyleSpan
 import android.text.style.UnderlineSpan
 import android.view.LayoutInflater
@@ -19,6 +24,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
@@ -32,6 +38,7 @@ import androidx.navigation.fragment.navArgs
 import com.hassan.tasknest.MainAppActivity
 import com.hassan.tasknest.R
 import com.hassan.tasknest.databinding.FragmentAddEditNoteBinding
+import com.hassan.tasknest.presentation.addeditnotes.formatting.NoteImageStorage
 import com.hassan.tasknest.presentation.addeditnotes.formatting.SpannableConverter
 import com.hassan.tasknest.voice.VoskDictationController
 import com.hassan.tasknest.voice.VoskModelManager
@@ -52,12 +59,16 @@ class AddEditNoteFragment : Fragment() {
     private val args: AddEditNoteFragmentArgs by navArgs()
 
     private val voskModelManager: VoskModelManager by inject()
+    private val noteImageStorage: NoteImageStorage by inject()
 
     private var dictationController: VoskDictationController? = null
     private var isRecording: Boolean = false
     private var initialTitle: String = ""
     private var initialContent: String = ""
     private var initialValuesCaptured: Boolean = false
+    // Image file paths referenced by the note as originally loaded, captured once at load time so
+    // performSave() can diff against the current content and clean up any images removed by edits.
+    private var originalImagePaths: List<String> = emptyList()
 
     // "Format while typing" state: when true/non-null, applies to characters typed with no active selection.
     private var isBoldActive: Boolean = false
@@ -95,6 +106,20 @@ class AddEditNoteFragment : Fragment() {
                     "Microphone permission is needed for voice input",
                     Toast.LENGTH_SHORT
                 ).show()
+            }
+        }
+
+    private val pickImageLauncher =
+        registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            if (uri != null) {
+                viewLifecycleOwner.lifecycleScope.launch {
+                    val filePath = noteImageStorage.saveImage(uri)
+                    if (filePath != null) {
+                        insertImageAtCursor(filePath)
+                    } else {
+                        Toast.makeText(requireContext(), "Failed to add image", Toast.LENGTH_SHORT).show()
+                    }
+                }
             }
         }
 
@@ -176,6 +201,9 @@ class AddEditNoteFragment : Fragment() {
         binding.btnFormatBullet.setOnClickListener { showBulletStylePicker() }
         binding.btnFormatSize.setOnClickListener { showSizePicker() }
         binding.btnFormatColor.setOnClickListener { showColorPicker() }
+        binding.btnInsertImage.setOnClickListener {
+            pickImageLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+        }
 
         if (args.noteId != -1L && savedInstanceState == null) {
             viewModel.loadNoteForEdit(args.noteId)
@@ -190,11 +218,14 @@ class AddEditNoteFragment : Fragment() {
                         // One-time load: deserialize the persisted JSON content back into a real
                         // Spannable and set it directly, instead of the ongoing plain-text guarded
                         // comparison used below (which would strip all formatting via toString()).
-                        val spannableResult = SpannableConverter.jsonToSpannable(uiState.content)
+                        val spannableResult = SpannableConverter.jsonToSpannable(uiState.content, requireContext())
                         binding.etNoteContent.setText(spannableResult, TextView.BufferType.SPANNABLE)
                         // Capture the just-set Spannable's own JSON form (not the raw uiState.content
                         // string) so hasUnsavedChanges() compares apples-to-apples at exit time.
                         initialContent = SpannableConverter.spannableToJson(spannableResult)
+                        // Captured from the RAW loaded JSON (before any edits), so performSave() can
+                        // later tell which of these images the user removed during this edit session.
+                        originalImagePaths = SpannableConverter.extractImagePaths(uiState.content)
 
                         initialValuesCaptured = true
                     }
@@ -268,6 +299,13 @@ class AddEditNoteFragment : Fragment() {
             .setTitle("Delete Note")
             .setMessage("Are you sure you want to delete this note?")
             .setPositiveButton("Delete") { _, _ ->
+                // The entire note is being removed, so every image it currently references becomes
+                // orphaned; re-derive the current content from the live EditText (the same reliable
+                // source performSave() uses) rather than uiState.content, which the TextWatcher keeps
+                // as plain text mid-session and would silently yield no IMAGE entries here.
+                val imagePaths = SpannableConverter.extractImagePaths(currentContentAsJson())
+                imagePaths.forEach { path -> noteImageStorage.deleteImage(path) }
+
                 viewModel.deleteNote()
                 findNavController().navigateUp()
             }
@@ -295,6 +333,18 @@ class AddEditNoteFragment : Fragment() {
                 performSave()
             }
             .setNegativeButton("Discard") { _, _ ->
+                // Any image added during this session but never saved has no reference left once
+                // discarded: it was never part of originalImagePaths, so it's now orphaned on disk.
+                Log.d("DiscardCleanup", "originalImagePaths = $originalImagePaths")
+                val currentImagePaths = SpannableConverter.extractImagePaths(currentContentAsJson())
+                Log.d("DiscardCleanup", "currentImagePaths = $currentImagePaths")
+                val discardedPaths = currentImagePaths - originalImagePaths.toSet()
+                Log.d("DiscardCleanup", "discardedPaths = $discardedPaths")
+                discardedPaths.forEach { path ->
+                    Log.d("DiscardCleanup", "Attempting to delete: $path")
+                    noteImageStorage.deleteImage(path)
+                }
+
                 findNavController().navigateUp()
             }
             .setNeutralButton("Cancel", null)
@@ -306,7 +356,15 @@ class AddEditNoteFragment : Fragment() {
         // saveNote() reads content from the ViewModel's own uiState, which the TextWatcher keeps in
         // sync as plain text for validation purposes; overwrite it with the JSON-serialized form
         // right before saving so the persisted content actually carries formatting.
-        viewModel.updateContent(currentContentAsJson())
+        val jsonContent = currentContentAsJson()
+
+        // Any image present at load time but no longer referenced in the current content was
+        // removed by the user during this edit session: its file is now orphaned, so delete it.
+        val currentImagePaths = SpannableConverter.extractImagePaths(jsonContent)
+        val removedPaths = originalImagePaths - currentImagePaths.toSet()
+        removedPaths.forEach { path -> noteImageStorage.deleteImage(path) }
+
+        viewModel.updateContent(jsonContent)
         viewModel.saveNote()
     }
 
@@ -903,5 +961,50 @@ class AddEditNoteFragment : Fragment() {
         editable.getSpans(start, end, ForegroundColorSpan::class.java).forEach { span ->
             editable.removeSpan(span)
         }
+    }
+
+    /**
+     * Inserts a saved image inline at the cursor as an ImageSpan anchored to a single \uFFFC
+     * placeholder character, forcing it onto its own line (leading newline unless already at the
+     * start of a line, trailing newline always) so following text starts fresh below it.
+     */
+    private fun insertImageAtCursor(filePath: String) {
+        val bitmap = BitmapFactory.decodeFile(filePath)
+        if (bitmap == null) {
+            Toast.makeText(requireContext(), "Failed to load image", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val editTextWidth = binding.etNoteContent.width
+        val targetWidth = (
+            if (editTextWidth > 0) {
+                editTextWidth - binding.etNoteContent.paddingLeft - binding.etNoteContent.paddingRight
+            } else {
+                // etNoteContent isn't measured yet: fall back to the screen width minus the 16dp
+                // horizontal padding applied on both sides by the content LinearLayout that wraps
+                // it in fragment_add_edit_note.xml (matching etNoteTitle's own 16dp padding).
+                val contentHorizontalPaddingPx = (16 * resources.displayMetrics.density).toInt()
+                resources.displayMetrics.widthPixels - (2 * contentHorizontalPaddingPx)
+            }
+        ).coerceAtLeast(1)
+        val maxHeight = (400 * resources.displayMetrics.density).toInt()
+        val aspectRatio = bitmap.height.toFloat() / bitmap.width.toFloat()
+        val targetHeight = (targetWidth * aspectRatio).toInt().coerceIn(1, maxHeight)
+
+        val scaledBitmap = Bitmap.createScaledBitmap(bitmap, targetWidth, targetHeight, true)
+        val drawable = BitmapDrawable(resources, scaledBitmap)
+        drawable.setBounds(0, 0, targetWidth, targetHeight)
+        val imageSpan = ImageSpan(drawable, filePath)
+
+        val editable = binding.etNoteContent.text ?: return
+        val cursorPos = binding.etNoteContent.selectionStart.coerceAtLeast(0)
+        val needsLeadingNewline = cursorPos != 0 && editable[cursorPos - 1] != '\n'
+        val textToInsert = (if (needsLeadingNewline) "\n" else "") + "\uFFFC" + "\n"
+
+        editable.insert(cursorPos, textToInsert)
+
+        val placeholderStart = cursorPos + if (needsLeadingNewline) 1 else 0
+        editable.setSpan(imageSpan, placeholderStart, placeholderStart + 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        binding.etNoteContent.setSelection(placeholderStart + 2)
     }
 }

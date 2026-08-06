@@ -7,6 +7,7 @@
     android:layout_height="match_parent"
     android:background="@color/background_light">
 
+    <!-- 1. TOP TOOLBAR (Pinned to Top) -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="0dp"
@@ -51,34 +52,41 @@
         </LinearLayout>
     </com.google.android.material.appbar.MaterialToolbar>
 
+    <EditText
+        android:id="@+id/etNoteTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@null"
+        android:hint="@string/hint_note_title"
+        android:inputType="textCapSentences|textMultiLine"
+        android:layout_marginTop="8dp"
+        android:paddingHorizontal="16dp"
+        android:textAppearance="@style/TextAppearance.Material3.HeadlineMedium"
+        android:textColor="@color/text_primary"
+        android:textColorHint="@color/text_secondary"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/toolbar" />
+
+    <!-- 2. SCROLLABLE AREA (Constrained exactly between top and bottom toolbars) -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/scrollView"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:clipToPadding="false"
         android:fillViewport="true"
+        app:layout_constraintTop_toBottomOf="@id/etNoteTitle"
         app:layout_constraintBottom_toTopOf="@id/dividerFormatToolbar"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/toolbar">
+        app:layout_constraintStart_toStartOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingHorizontal="24dp"
+            android:paddingHorizontal="16dp"
             android:paddingTop="8dp"
-            android:paddingBottom="24dp"> <EditText
-            android:id="@+id/etNoteTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@null"
-            android:hint="@string/hint_note_title"
-            android:inputType="textCapSentences|textMultiLine"
-            android:textAppearance="@style/TextAppearance.Material3.HeadlineMedium"
-            android:textColor="@color/text_primary"
-            android:textColorHint="@color/text_secondary"
-            android:textStyle="bold" />
+            android:paddingBottom="24dp">
 
             <EditText
                 android:id="@+id/etNoteContent"
@@ -97,6 +105,7 @@
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
+    <!-- 3. MIC FAB (Constrained to sit right above the formatting divider) -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/btnMicToggle"
         android:layout_width="wrap_content"
@@ -106,11 +115,12 @@
         android:contentDescription="@string/desc_toggle_mic"
         android:src="@drawable/ic_mic"
         app:backgroundTint="@color/brand_primary"
-        app:layout_constraintBottom_toTopOf="@id/formatToolbarContainer"
+        app:layout_constraintBottom_toTopOf="@id/dividerFormatToolbar"
         app:layout_constraintEnd_toEndOf="parent"
         app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.MediumComponent"
         app:tint="@color/white" />
 
+    <!-- 4. FORMATTING TOOLBAR DIVIDER -->
     <View
         android:id="@+id/dividerFormatToolbar"
         android:layout_width="0dp"
@@ -120,6 +130,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- 5. FORMATTING TOOLBAR (Pinned to Bottom) -->
     <HorizontalScrollView
         android:id="@+id/formatToolbarContainer"
         android:layout_width="0dp"
@@ -192,6 +203,17 @@
                 android:contentDescription="@string/desc_format_size"
                 app:tint="@color/icon_tint" />
 
+            <ImageView
+                android:id="@+id/btnInsertImage"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="4dp"
+                android:padding="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_image"
+                android:contentDescription="@string/desc_insert_image"
+                app:tint="@color/icon_tint" />
+
             <View
                 android:id="@+id/btnFormatColor"
                 android:layout_width="24dp"
@@ -206,6 +228,7 @@
         </LinearLayout>
     </HorizontalScrollView>
 
+    <!-- 6. MODEL DOWNLOAD OVERLAY (Covers everything when visible) -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/modelDownloadOverlay"
         android:layout_width="0dp"

@@ -1,17 +1,22 @@
 package com.hassan.tasknest.presentation.addeditnotes.formatting
 
+import android.content.Context
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.drawable.BitmapDrawable
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.style.AbsoluteSizeSpan
 import android.text.style.BulletSpan
 import android.text.style.ForegroundColorSpan
+import android.text.style.ImageSpan
 import android.text.style.StyleSpan
 import android.text.style.UnderlineSpan
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 
 /** Converts between Android's Spanned/Spannable text and a JSON string representation of [NoteSpan]s. */
 object SpannableConverter {
@@ -42,6 +47,12 @@ object SpannableConverter {
                     noteSpans.add(NoteSpan.TextColor(start, end, hex))
                 }
                 is BulletSpan -> noteSpans.add(NoteSpan.Bullet(start, end))
+                is ImageSpan -> {
+                    val source = span.source
+                    if (source != null) {
+                        noteSpans.add(NoteSpan.Image(start, end, source))
+                    }
+                }
             }
         }
 
@@ -81,6 +92,12 @@ object SpannableConverter {
                     spanObject.put("start", noteSpan.start)
                     spanObject.put("end", noteSpan.end)
                 }
+                is NoteSpan.Image -> {
+                    spanObject.put("type", "IMAGE")
+                    spanObject.put("start", noteSpan.start)
+                    spanObject.put("end", noteSpan.end)
+                    spanObject.put("value", noteSpan.filePath)
+                }
             }
             spansJson.put(spanObject)
         }
@@ -92,7 +109,7 @@ object SpannableConverter {
     }
 
     /** Parses a JSON string produced by [spannableToJson] back into a Spannable, falling back to plain text on failure. */
-    fun jsonToSpannable(json: String): Spannable {
+    fun jsonToSpannable(json: String, context: Context): Spannable {
         return try {
             val root = JSONObject(json)
             val text = root.getString("text")
@@ -117,12 +134,53 @@ object SpannableConverter {
                         builder.setSpan(ForegroundColorSpan(Color.parseColor(value)), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
                     }
                     "BULLET" -> builder.setSpan(BulletSpan(), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                    "IMAGE" -> {
+                        val filePath = spanObject.getString("value")
+                        val imageFile = File(filePath)
+                        if (imageFile.exists()) {
+                            val bitmap = try {
+                                BitmapFactory.decodeFile(filePath)
+                            } catch (e: Exception) {
+                                null
+                            }
+                            if (bitmap != null) {
+                                val drawable = BitmapDrawable(context.resources, bitmap)
+                                drawable.setBounds(0, 0, drawable.intrinsicWidth, drawable.intrinsicHeight)
+                                builder.setSpan(
+                                    ImageSpan(drawable, filePath),
+                                    start,
+                                    end,
+                                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                                )
+                            }
+                        }
+                    }
                 }
             }
 
             builder
         } catch (e: Exception) {
             SpannableStringBuilder(json)
+        }
+    }
+
+    /** Extracts every image file path referenced by IMAGE-type spans in a JSON string produced by [spannableToJson]. */
+    fun extractImagePaths(json: String): List<String> {
+        return try {
+            val root = JSONObject(json)
+            val spansJson = root.getJSONArray("spans")
+            val paths = mutableListOf<String>()
+
+            for (i in 0 until spansJson.length()) {
+                val spanObject = spansJson.getJSONObject(i)
+                if (spanObject.getString("type") == "IMAGE") {
+                    paths.add(spanObject.getString("value"))
+                }
+            }
+
+            paths
+        } catch (e: Exception) {
+            emptyList()
         }
     }
 }
